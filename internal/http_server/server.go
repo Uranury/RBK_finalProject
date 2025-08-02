@@ -2,6 +2,7 @@ package http_server
 
 import (
 	"context"
+	"github.com/Uranury/RBK_finalProject/internal/auth"
 	"github.com/Uranury/RBK_finalProject/pkg/config"
 	"github.com/gin-gonic/gin"
 	"github.com/hibiken/asynq"
@@ -14,10 +15,11 @@ import (
 
 type Server struct {
 	router      *gin.Engine
-	server      *http.Server
+	httpServer  *http.Server
 	cfg         *config.Config
 	db          *sqlx.DB
 	asynqClient *asynq.Client
+	authService *auth.Service
 	redisClient *redis.Client
 	logger      *slog.Logger
 }
@@ -38,12 +40,15 @@ func NewServer(
 		IdleTimeout:  60 * time.Second,
 	}
 
+	authService := auth.NewService(cfg.JWTKey)
+
 	s := &Server{
 		router:      router,
-		server:      httpServer,
+		httpServer:  httpServer,
 		cfg:         cfg,
 		db:          db,
 		asynqClient: asynqClient,
+		authService: authService,
 		redisClient: redisClient,
 		logger:      logger,
 	}
@@ -53,7 +58,7 @@ func NewServer(
 
 func (s *Server) Run() error {
 	s.logger.Info("Server starting", "address", s.cfg.ListenAddr)
-	return s.server.ListenAndServe()
+	return s.httpServer.ListenAndServe()
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
@@ -61,8 +66,8 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	done := make(chan error, 1)
 
 	go func() {
-		if err := s.server.Shutdown(ctx); err != nil {
-			s.logger.Error("HTTP server shutdown failed", "error", err)
+		if err := s.httpServer.Shutdown(ctx); err != nil {
+			s.logger.Error("HTTP http_server shutdown failed", "error", err)
 			done <- err
 			return
 		}
@@ -98,10 +103,4 @@ func (s *Server) Shutdown(ctx context.Context) error {
 		s.logger.Info("Graceful shutdown timed out")
 		return ctx.Err()
 	}
-}
-
-func (s *Server) setupRoutes() {
-	s.router.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "pong"})
-	})
 }

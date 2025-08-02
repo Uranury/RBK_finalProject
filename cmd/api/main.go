@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/Uranury/RBK_finalProject/internal/auth"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -14,14 +15,13 @@ import (
 func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	// Initialize dependencies
 	appDeps, err := InitDeps(logger)
 	if err != nil {
 		logger.Error("Failed to initialize dependencies", "error", err)
 		os.Exit(1)
 	}
+	auth.NewService(appDeps.cfg.JWTKey)
 
-	// Create server
 	server, err := http_server.NewServer(
 		appDeps.cfg,
 		appDeps.db,
@@ -30,11 +30,10 @@ func main() {
 		logger,
 	)
 	if err != nil {
-		logger.Error("Failed to create server", "error", err)
+		logger.Error("Failed to create http_server", "error", err)
 		os.Exit(1)
 	}
 
-	// Graceful shutdown setup
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -42,16 +41,15 @@ func main() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	// Start server in goroutine
+	// Start http_server in goroutine
 	go func() {
-		logger.Info("Starting server", "port", appDeps.cfg.ListenAddr)
+		logger.Info("Starting http_server", "port", appDeps.cfg.ListenAddr)
 		if err := server.Run(); err != nil {
 			logger.Error("Server failed to start", "error", err)
 			cancel()
 		}
 	}()
 
-	// Wait for shutdown signal
 	select {
 	case sig := <-sigChan:
 		logger.Info("Received shutdown signal", "signal", sig)
@@ -59,8 +57,7 @@ func main() {
 		logger.Info("Context cancelled")
 	}
 
-	// Graceful shutdown
-	logger.Info("Shutting down server...")
+	logger.Info("Shutting down http_server...")
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer shutdownCancel()
 

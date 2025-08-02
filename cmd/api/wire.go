@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/Uranury/RBK_finalProject/internal/db"
 	"github.com/Uranury/RBK_finalProject/pkg/config"
+	"github.com/Uranury/RBK_finalProject/pkg/db"
 	"github.com/hibiken/asynq"
 	"github.com/jmoiron/sqlx"
 	"github.com/redis/go-redis/v9"
@@ -23,7 +23,7 @@ func InitDeps(logger *slog.Logger) (*AppDeps, error) {
 		return nil, err
 	}
 
-	database, err := db.InitDB("postgres", cfg.DbURL)
+	database, err := db.InitDB("postgres", cfg.DbURL, cfg.MigrationsPath)
 	if err != nil {
 		return nil, err
 	}

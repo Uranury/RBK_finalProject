@@ -12,6 +12,7 @@ type Config struct {
 	RedisAddr      string
 	DbURL          string
 	MigrationsPath string
+	JWTKey         string
 }
 
 func Load() (*Config, error) {
@@ -23,6 +24,7 @@ func Load() (*Config, error) {
 	redisAddr := getEnv("REDIS_ADDR", ":6379")
 	dbURL := getEnv("DB_URL", "postgres://postgres:postgres@db:5432/postgres?sslmode=disable")
 	migrationsPath := os.Getenv("MIGRATIONS_PATH")
+	JWTKey := os.Getenv("JWT_KEY")
 
 	if migrationsPath == "" {
 		return nil, errors.New("migrations path not set")
@@ -33,6 +35,7 @@ func Load() (*Config, error) {
 		RedisAddr:      redisAddr,
 		DbURL:          dbURL,
 		MigrationsPath: migrationsPath,
+		JWTKey:         JWTKey,
 	}, nil
 }
 
