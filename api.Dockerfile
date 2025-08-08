@@ -28,7 +28,7 @@ COPY --from=builder /app/.env ./
 COPY --from=builder /app/api .
 
 # Copy migrations if needed
-COPY --from=builder /app/internal/db/migrations ./internal/db/migrations
+COPY --from=builder /app/migrations ./migrations
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S appgroup && \

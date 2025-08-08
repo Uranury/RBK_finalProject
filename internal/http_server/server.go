@@ -3,6 +3,7 @@ package http_server
 import (
 	"context"
 	"github.com/Uranury/RBK_finalProject/internal/auth"
+	"github.com/Uranury/RBK_finalProject/internal/handlers"
 	"github.com/Uranury/RBK_finalProject/pkg/config"
 	"github.com/gin-gonic/gin"
 	"github.com/hibiken/asynq"
@@ -10,7 +11,6 @@ import (
 	"github.com/redis/go-redis/v9"
 	"log/slog"
 	"net/http"
-	"time"
 )
 
 type Server struct {
@@ -21,6 +21,7 @@ type Server struct {
 	asynqClient *asynq.Client
 	authService *auth.Service
 	redisClient *redis.Client
+	userHandler *handlers.UserHandler
 	logger      *slog.Logger
 }
 
@@ -32,26 +33,22 @@ func NewServer(
 	logger *slog.Logger) (*Server, error) {
 
 	router := gin.Default()
-	httpServer := &http.Server{
-		Addr:         cfg.ListenAddr,
-		Handler:      router,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
-	}
-
-	authService := auth.NewService(cfg.JWTKey)
 
 	s := &Server{
 		router:      router,
-		httpServer:  httpServer,
 		cfg:         cfg,
 		db:          db,
 		asynqClient: asynqClient,
-		authService: authService,
 		redisClient: redisClient,
 		logger:      logger,
 	}
+
+	s.initHTTPServer()
+
+	if err := s.initDependencies(); err != nil {
+		return nil, err
+	}
+
 	s.setupRoutes()
 	return s, nil
 }

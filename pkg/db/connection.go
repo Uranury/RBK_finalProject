@@ -32,7 +32,7 @@ func RunMigrations(db *sqlx.DB, migrationsPath string, logger *slog.Logger) erro
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(
-		"file://"+migrationsPath,
+		migrationsPath,
 		"postgres",
 		driver,
 	)

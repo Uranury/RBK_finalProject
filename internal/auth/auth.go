@@ -32,7 +32,7 @@ func (s *Service) GenerateJWT(userID uuid.UUID, role Role) (string, error) {
 
 	claims := jwt.MapClaims{
 		"user_id": userID.String(), // Explicitly convert to string
-		"role":    string(role),    // Be explicit about string conversion
+		"role":    string(role),
 		"exp":     time.Now().Add(time.Hour * 24).Unix(),
 	}
 

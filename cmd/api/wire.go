@@ -23,7 +23,7 @@ func InitDeps(logger *slog.Logger) (*AppDeps, error) {
 		return nil, err
 	}
 
-	database, err := db.InitDB("postgres", cfg.DbURL, cfg.MigrationsPath)
+	database, err := db.InitDB("postgres", cfg.DbURL, cfg.MigrationsPath, logger)
 	if err != nil {
 		return nil, err
 	}
