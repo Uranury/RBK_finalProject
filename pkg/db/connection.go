@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jmoiron/sqlx"
 	"log/slog"
+	"strings"
 )
 
 // InitDB connects to the database and returns a ready-to-use handle.
@@ -31,8 +33,13 @@ func RunMigrations(db *sqlx.DB, migrationsPath string, logger *slog.Logger) erro
 		return fmt.Errorf("failed to create migration driver: %w", err)
 	}
 
+	migrationURL := migrationsPath
+	if !strings.HasPrefix(migrationsPath, "file://") {
+		migrationURL = "file://" + migrationsPath
+	}
+
 	m, err := migrate.NewWithDatabaseInstance(
-		migrationsPath,
+		migrationURL,
 		"postgres",
 		driver,
 	)
