@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"errors"
+	"log"
+	"net/http"
+
 	"github.com/Uranury/RBK_finalProject/pkg/apperrors"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 type ErrorResponse struct {
@@ -14,6 +16,7 @@ type ErrorResponse struct {
 
 // HandleError converts application errors to appropriate HTTP responses
 func HandleError(c *gin.Context, err error) {
+	log.Printf("HandleError received error: %v (type: %T)", err, err)
 	var appErr *apperrors.AppError
 	if errors.As(err, &appErr) {
 		httpStatus := mapErrorCodeToHTTPStatus(appErr.Code)

@@ -3,8 +3,9 @@ package config
 import (
 	"errors"
 	"fmt"
-	"github.com/joho/godotenv"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -24,7 +25,7 @@ func Load() (*Config, error) {
 	redisAddr := getEnv("REDIS_ADDR", ":6379")
 	dbURL := getEnv("DB_URL", "postgres://postgres:postgres@db:5432/postgres?sslmode=disable")
 	migrationsPath := os.Getenv("MIGRATIONS_PATH")
-	JWTKey := os.Getenv("JWT_KEY")
+	JWTKey := os.Getenv("JWT_SECRET")
 
 	if migrationsPath == "" {
 		return nil, errors.New("migrations path not set")

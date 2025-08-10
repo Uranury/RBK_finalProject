@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+
 	"github.com/Uranury/RBK_finalProject/internal/models"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -74,7 +75,7 @@ func (r *repository) Create(ctx context.Context, user *models.User) error {
 	_, err := r.db.ExecContext(
 		ctx,
 		`INSERT INTO users (id, name, email, password, balance, role, created_at, updated_at) 
-				VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
 		user.ID, user.Name, user.Email, user.Password, user.Balance, user.Role, user.CreatedAt, user.UpdatedAt,
 	)
 	return err

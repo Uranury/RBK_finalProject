@@ -2,14 +2,15 @@ package services
 
 import (
 	"context"
+	"strings"
+	"time"
+
 	"github.com/Uranury/RBK_finalProject/internal/auth"
 	"github.com/Uranury/RBK_finalProject/internal/models"
 	"github.com/Uranury/RBK_finalProject/internal/repositories/user"
 	"github.com/Uranury/RBK_finalProject/pkg/apperrors"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
-	"strings"
-	"time"
 )
 
 type User struct {
@@ -24,7 +25,7 @@ func NewUser(repo user.Repository, Auth *auth.Service) *User {
 func (s *User) CreateUser(ctx context.Context, user *models.User) error {
 	existingUser, err := s.repo.FindByEmail(ctx, user.Email)
 	if err != nil {
-		return err
+		return apperrors.WrapInternal(err, "failed to check existing user")
 	}
 	if existingUser != nil {
 		return apperrors.ErrUserExists
@@ -34,6 +35,8 @@ func (s *User) CreateUser(ctx context.Context, user *models.User) error {
 	user.CreatedAt = now
 	user.UpdatedAt = now
 	user.ID = uuid.New()
+	user.Balance = 0.0
+	user.Role = auth.User
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -42,7 +45,7 @@ func (s *User) CreateUser(ctx context.Context, user *models.User) error {
 	user.Password = string(hashedPassword)
 
 	if err := s.repo.Create(ctx, user); err != nil {
-		return err
+		return apperrors.WrapInternal(err, "failed to create user")
 	}
 	return nil
 }
