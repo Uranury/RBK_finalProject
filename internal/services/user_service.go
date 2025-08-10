@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -14,20 +15,23 @@ import (
 )
 
 type User struct {
-	repo user.Repository
-	Auth auth.Service
+	repo   user.Repository
+	Auth   auth.Service
+	logger *slog.Logger
 }
 
-func NewUser(repo user.Repository, Auth *auth.Service) *User {
-	return &User{repo: repo, Auth: *Auth}
+func NewUser(repo user.Repository, Auth *auth.Service, logger *slog.Logger) *User {
+	return &User{repo: repo, Auth: *Auth, logger: logger}
 }
 
 func (s *User) CreateUser(ctx context.Context, user *models.User) error {
 	existingUser, err := s.repo.FindByEmail(ctx, user.Email)
 	if err != nil {
+		s.logger.Error("failed to check existing user", "email", user.Email, "error", err)
 		return apperrors.WrapInternal(err, "failed to check existing user")
 	}
 	if existingUser != nil {
+		s.logger.Warn("attempt to create duplicate user", "email", user.Email)
 		return apperrors.ErrUserExists
 	}
 
@@ -40,49 +44,64 @@ func (s *User) CreateUser(ctx context.Context, user *models.User) error {
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
+		s.logger.Error("failed to hash password", "user_id", user.ID, "error", err)
 		return apperrors.NewInternalError("failed to hash password", err)
 	}
 	user.Password = string(hashedPassword)
 
 	if err := s.repo.Create(ctx, user); err != nil {
+		s.logger.Error("failed to create user in repository", "user_id", user.ID, "error", err)
 		return apperrors.WrapInternal(err, "failed to create user")
 	}
+
+	s.logger.Info("user created successfully", "user_id", user.ID, "email", user.Email)
 	return nil
 }
 
 func (s *User) LoginUser(ctx context.Context, email, password string) (string, error) {
 	if email == "" || password == "" {
+		s.logger.Warn("login attempt with missing email or password")
 		return "", apperrors.NewValidationError("email and password is required")
 	}
 
 	existingUser, err := s.repo.FindByEmail(ctx, email)
 	if err != nil {
+		s.logger.Error("failed to find user by email", "email", email, "error", err)
 		return "", err
 	}
 	if existingUser == nil {
+		s.logger.Warn("login attempt for non-existent user", "email", email)
 		return "", apperrors.NewNotFoundError("user not found")
 	}
 
 	password = strings.TrimSpace(password)
 	err = bcrypt.CompareHashAndPassword([]byte(existingUser.Password), []byte(password))
 	if err != nil {
+		s.logger.Warn("invalid login credentials", "email", email)
 		return "", apperrors.ErrInvalidCredentials
 	}
 
 	token, err := s.Auth.GenerateJWT(existingUser.ID, existingUser.Role)
 	if err != nil {
+		s.logger.Error("failed to generate JWT", "user_id", existingUser.ID, "error", err)
 		return "", apperrors.WrapInternal(err, "failed to generate JWT")
 	}
 
+	s.logger.Info("user logged in successfully", "user_id", existingUser.ID, "email", email)
 	return token, nil
 }
 
 func (s *User) GetUserProfile(ctx context.Context, id uuid.UUID) (*models.User, error) {
+	s.logger.Info("fetching user profile", "user_id", id)
+
+	// Uncomment & implement actual fetching logic
 	//existingUser, err := s.repo.FindByID(ctx, id)
 	//if err != nil {
+	//	s.logger.Error("failed to find user", "user_id", id, "error", err)
 	//	return nil, apperrors.WrapInternal(err, "failed to find user")
 	//}
 	//if existingUser == nil {
+	//	s.logger.Warn("user not found", "user_id", id)
 	//	return nil, apperrors.ErrUserNotFound
 	//}
 	return nil, nil

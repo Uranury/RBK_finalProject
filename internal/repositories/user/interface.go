@@ -15,4 +15,5 @@ type Repository interface {
 	UpdateBalance(ctx context.Context, tx *sqlx.Tx, userID uuid.UUID, newBalance float64) error
 	Create(ctx context.Context, user *models.User) error
 	Delete(ctx context.Context, userID uuid.UUID) error
+	GetUserByIdForUpdate(ctx context.Context, tx *sqlx.Tx, userID uuid.UUID) (*models.User, error)
 }

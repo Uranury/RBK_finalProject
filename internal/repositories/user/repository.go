@@ -85,3 +85,22 @@ func (r *repository) Delete(ctx context.Context, userID uuid.UUID) error {
 	_, err := r.db.ExecContext(ctx, "DELETE FROM users WHERE id = $1", userID)
 	return err
 }
+
+func (r *repository) GetUserByIdForUpdate(ctx context.Context, tx *sqlx.Tx, userID uuid.UUID) (*models.User, error) {
+	var user models.User
+	query := `
+        SELECT * 
+        FROM users 
+        WHERE id = $1 
+        FOR UPDATE
+    `
+	// Use tx.QueryRowxContext so we stay inside the transaction
+	if err := tx.GetContext(ctx, &user, query, userID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &user, nil
+}

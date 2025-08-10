@@ -34,7 +34,10 @@ func InitDB(driver, dsn string, migrationsPath string, logger *slog.Logger) (*sq
 
 	// Test the connection
 	if err := db.Ping(); err != nil {
-		db.Close()
+		cerr := db.Close()
+		if cerr != nil {
+			return nil, fmt.Errorf("%v; also failed to close DB: %w", err, cerr)
+		}
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
@@ -50,7 +53,11 @@ func RunMigrations(dsn string, migrationsPath string, logger *slog.Logger) error
 	if err != nil {
 		return fmt.Errorf("failed to create migration connection: %w", err)
 	}
-	defer migrationDB.Close() // This will only close the migration connection
+	defer func() {
+		if cerr := migrationDB.Close(); cerr != nil {
+			logger.Error("failed to close migration connection", "error", cerr)
+		}
+	}() // This will only close the migration connection
 
 	driver, err := postgres.WithInstance(migrationDB.DB, &postgres.Config{})
 	if err != nil {

@@ -18,6 +18,9 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
+type UserInventory struct {
+}
+
 type UserSignupRequest struct {
 	Name     string `json:"name" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`
