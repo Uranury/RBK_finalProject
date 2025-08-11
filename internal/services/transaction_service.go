@@ -50,16 +50,16 @@ func (s *TransactionService) Withdraw(ctx context.Context, userID uuid.UUID, amo
 	}(tx)
 
 	// Get current user balance
-	user, err := s.userRepo.GetUserByIdForUpdate(ctx, tx, userID)
+	usr, err := s.userRepo.GetUserByIdForUpdate(ctx, tx, userID)
 	if err != nil {
 		s.logger.Error("failed to get user for update", "error", err, "user_id", userID)
 		return nil, apperrors.NewInternalError("Failed to process withdrawal", err)
 	}
-	if user == nil {
+	if usr == nil {
 		return nil, apperrors.NewNotFoundError("User not found")
 	}
 
-	balanceBefore := user.Balance
+	balanceBefore := usr.Balance
 	if balanceBefore < amount {
 		s.logger.Warn("insufficient funds for withdrawal", "user_id", userID, "balance", balanceBefore, "requested", amount)
 		return nil, apperrors.NewValidationError("Insufficient funds for withdrawal")
@@ -74,7 +74,7 @@ func (s *TransactionService) Withdraw(ctx context.Context, userID uuid.UUID, amo
 
 	// Create transaction record
 	now := time.Now()
-	transaction := &models.Transaction{
+	trnsc := &models.Transaction{
 		ID:            uuid.New(),
 		UserID:        userID,
 		Amount:        amount,
@@ -84,7 +84,7 @@ func (s *TransactionService) Withdraw(ctx context.Context, userID uuid.UUID, amo
 		CreatedAt:     now,
 	}
 
-	if err := s.transactionRepo.Create(ctx, tx, transaction); err != nil {
+	if err := s.transactionRepo.Create(ctx, tx, trnsc); err != nil {
 		s.logger.Error("failed to create transaction record", "error", err, "user_id", userID)
 		return nil, apperrors.NewInternalError("Failed to process withdrawal", err)
 	}
@@ -101,7 +101,7 @@ func (s *TransactionService) Withdraw(ctx context.Context, userID uuid.UUID, amo
 		"balance_before", balanceBefore,
 		"balance_after", newBalance)
 
-	return transaction, nil
+	return trnsc, nil
 }
 
 // Deposit handles depositing money to user's balance
@@ -125,16 +125,16 @@ func (s *TransactionService) Deposit(ctx context.Context, userID uuid.UUID, amou
 	}(tx)
 
 	// Get current user balance
-	user, err := s.userRepo.GetUserByIdForUpdate(ctx, tx, userID)
+	usr, err := s.userRepo.GetUserByIdForUpdate(ctx, tx, userID)
 	if err != nil {
 		s.logger.Error("failed to get user for update", "error", err, "user_id", userID)
 		return nil, apperrors.NewInternalError("Failed to process deposit", err)
 	}
-	if user == nil {
+	if usr == nil {
 		return nil, apperrors.NewNotFoundError("User not found")
 	}
 
-	balanceBefore := user.Balance
+	balanceBefore := usr.Balance
 	newBalance := balanceBefore + amount
 
 	// Update user balance
@@ -145,7 +145,7 @@ func (s *TransactionService) Deposit(ctx context.Context, userID uuid.UUID, amou
 
 	// Create transaction record
 	now := time.Now()
-	transaction := &models.Transaction{
+	trnsc := &models.Transaction{
 		ID:            uuid.New(),
 		UserID:        userID,
 		Amount:        amount,
@@ -155,7 +155,7 @@ func (s *TransactionService) Deposit(ctx context.Context, userID uuid.UUID, amou
 		CreatedAt:     now,
 	}
 
-	if err := s.transactionRepo.Create(ctx, tx, transaction); err != nil {
+	if err := s.transactionRepo.Create(ctx, tx, trnsc); err != nil {
 		s.logger.Error("failed to create transaction record", "error", err, "user_id", userID)
 		return nil, apperrors.NewInternalError("Failed to process deposit", err)
 	}
@@ -172,7 +172,7 @@ func (s *TransactionService) Deposit(ctx context.Context, userID uuid.UUID, amou
 		"balance_before", balanceBefore,
 		"balance_after", newBalance)
 
-	return transaction, nil
+	return trnsc, nil
 }
 
 // GetUserTransactions returns transaction history for a user

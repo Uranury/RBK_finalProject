@@ -71,7 +71,7 @@ func (s *User) LoginUser(ctx context.Context, email, password string) (string, e
 	}
 	if existingUser == nil {
 		s.logger.Warn("login attempt for non-existent user", "email", email)
-		return "", apperrors.NewNotFoundError("user not found")
+		return "", apperrors.ErrUserNotFound
 	}
 
 	password = strings.TrimSpace(password)

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -21,22 +22,29 @@ type ErrorResponse struct {
 func HandleError(c *gin.Context, err error) {
 	log.Printf("HandleError received error: %v (type: %T)", err, err)
 
-	// Handle Gin validation errors first
-	if validationErrors, ok := err.(validator.ValidationErrors); ok {
+	// 1️⃣ Handle JSON parsing & binding errors first
+	if errors.Is(err, io.EOF) || strings.Contains(err.Error(), "json:") {
+		handleBindingError(c, err)
+		return
+	}
+
+	// 2️⃣ Handle struct validation errors
+	var validationErrors validator.ValidationErrors
+	if errors.As(err, &validationErrors) {
 		handleValidationErrors(c, validationErrors)
 		return
 	}
 
-	// Handle other validation errors (like binding errors)
+	// 3️⃣ Handle generic binding/validation errors
 	if strings.Contains(err.Error(), "validation") || strings.Contains(err.Error(), "binding") {
 		handleBindingError(c, err)
 		return
 	}
 
+	// 4️⃣ Handle application-specific errors
 	var appErr *apperrors.AppError
 	if errors.As(err, &appErr) {
 		httpStatus := mapErrorCodeToHTTPStatus(appErr.Code)
-
 		c.JSON(httpStatus, ErrorResponse{
 			Error: appErr.Message,
 			Code:  int(appErr.Code),
@@ -44,7 +52,7 @@ func HandleError(c *gin.Context, err error) {
 		return
 	}
 
-	// Handle unknown errors - don't expose internal details
+	// 5️⃣ Unknown errors — don’t leak internal details
 	c.JSON(http.StatusInternalServerError, ErrorResponse{
 		Error: "An unexpected error occurred. Please try again later.",
 	})

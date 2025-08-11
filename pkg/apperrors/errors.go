@@ -106,28 +106,3 @@ var (
 	ErrUserExists         = NewAlreadyExistsError("user already exists")
 	ErrInvalidCredentials = NewUnauthorizedError("invalid credentials")
 )
-
-// IsNotFound Helper functions to check error types
-func IsNotFound(err error) bool {
-	var appErr *AppError
-	if errors.As(err, &appErr) {
-		return appErr.Code == CodeNotFound
-	}
-	return false
-}
-
-func IsValidation(err error) bool {
-	var appErr *AppError
-	if errors.As(err, &appErr) {
-		return appErr.Code == CodeValidation
-	}
-	return false
-}
-
-func IsAlreadyExists(err error) bool {
-	var appErr *AppError
-	if errors.As(err, &appErr) {
-		return appErr.Code == CodeAlreadyExists
-	}
-	return false
-}

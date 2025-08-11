@@ -4,10 +4,10 @@ create-mig:
 	migrate create -ext sql -dir migrations -seq $(name)
 
 migrate-up:
-	migrate -path internal/db/migrations -database $(DB_URL) up
+	migrate -path /migrations -database $(DB_URL) up
 
 migrate-down:
-	migrate -path internal/db/migrations -database $(DB_URL) down
+	migrate -path /migrations -database $(DB_URL) down
 
 build:
 	docker-compose up --build
