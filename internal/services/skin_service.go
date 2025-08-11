@@ -2,12 +2,13 @@ package services
 
 import (
 	"context"
+	"log/slog"
+	"time"
+
 	"github.com/Uranury/RBK_finalProject/internal/models"
 	"github.com/Uranury/RBK_finalProject/internal/repositories/skin"
 	"github.com/Uranury/RBK_finalProject/pkg/apperrors"
 	"github.com/google/uuid"
-	"log/slog"
-	"time"
 )
 
 type Skin struct {
@@ -17,6 +18,29 @@ type Skin struct {
 
 func NewSkin(repo skin.Repository, logger *slog.Logger) *Skin {
 	return &Skin{repo: repo, logger: logger}
+}
+
+// GetAllGuns returns all available guns in the system
+func (s *Skin) GetAllGuns() []models.Gun {
+	return []models.Gun{
+		// Pistols
+		models.AK47, models.M4A4, models.M4A1S, models.DesertEagle, models.USPS,
+		models.Glock18, models.P250, models.Tec9, models.CZ75,
+		// Rifles
+		models.AWP, models.SSG08, models.SCAR20, models.G3SG1,
+		// SMGs
+		models.MP9, models.MAC10, models.MP7, models.P90, models.UMP45, models.PPBizon,
+		// Shotguns
+		models.Nova, models.XM1014, models.MAG7, models.SawedOff,
+		// Machine Guns
+		models.M249, models.Negev,
+		// Knives
+		models.Karambit, models.Butterfly, models.M9Bayonet, models.Bayonet,
+		models.FlipKnife, models.GutKnife, models.Huntsman, models.ShadowDaggers,
+		// Other
+		models.Falchion, models.Bowie, models.Navaja, models.Stiletto,
+		models.Ursus, models.Nomad, models.Paracord, models.Survival, models.Classic,
+	}
 }
 
 func (s *Skin) CreateSkin(ctx context.Context, skin *models.Skin) (*models.Skin, error) {
@@ -35,6 +59,11 @@ func (s *Skin) CreateSkin(ctx context.Context, skin *models.Skin) (*models.Skin,
 	if skin.Condition > 1 || skin.Condition < 0 {
 		s.logger.Warn("skin creation failed: invalid condition", "condition", skin.Condition)
 		return nil, apperrors.NewValidationError("skin condition should be between 0 and 1")
+	}
+
+	// Set default gun if not provided
+	if skin.Gun == "" {
+		skin.Gun = models.AK47
 	}
 
 	now := time.Now()

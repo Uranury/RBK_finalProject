@@ -25,6 +25,7 @@ type Server struct {
 	userHandler        *handlers.UserHandler
 	marketplaceHandler *handlers.MarketplaceHandler
 	skinHandler        *handlers.SkinHandler
+	transactionHandler *handlers.TransactionHandler
 	logger             *slog.Logger
 }
 

@@ -5,6 +5,8 @@ import (
 
 	"github.com/Uranury/RBK_finalProject/internal/middleware"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func (s *Server) setupRoutes() {
@@ -14,6 +16,12 @@ func (s *Server) setupRoutes() {
 	s.router.POST("/signup", s.userHandler.Signup)
 	s.router.POST("/login", s.userHandler.Login)
 
+	// Swagger documentation
+	s.router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// Public endpoints
+	s.router.GET("/guns", s.skinHandler.GetGuns)
+
 	protected := s.router.Group("/", middleware.JWTAuthMiddleware(s.authService))
 	// Marketplace
 	protected.GET("/marketplace/skins", s.marketplaceHandler.ListAvailable)
@@ -22,4 +30,8 @@ func (s *Server) setupRoutes() {
 	protected.POST("/marketplace/purchase", s.marketplaceHandler.Purchase)
 	// Skin creation (protected)
 	protected.POST("/skins", s.skinHandler.Create)
+	// Transactions
+	protected.POST("/transactions/withdraw", s.transactionHandler.Withdraw)
+	protected.POST("/transactions/deposit", s.transactionHandler.Deposit)
+	protected.GET("/transactions/history", s.transactionHandler.GetHistory)
 }

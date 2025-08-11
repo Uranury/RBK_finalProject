@@ -20,9 +20,9 @@ func NewRepository(db *sqlx.DB) Repository {
 
 func (r *repository) Create(ctx context.Context, skin *models.Skin) error {
 	_, err := r.db.ExecContext(ctx,
-		`INSERT INTO skins (id, owner_id, name, rarity, condition, price, image, available, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-		skin.ID, skin.OwnerID, skin.Name, skin.Rarity, skin.Condition, skin.Price, skin.Image, skin.Available, skin.CreatedAt, skin.UpdatedAt,
+		`INSERT INTO skins (id, owner_id, name, gun, rarity, condition, price, image, available, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+		skin.ID, skin.OwnerID, skin.Name, skin.Gun, skin.Rarity, skin.Condition, skin.Price, skin.Image, skin.Available, skin.CreatedAt, skin.UpdatedAt,
 	)
 	return err // Simplified return
 }

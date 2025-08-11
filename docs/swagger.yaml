@@ -1,0 +1,627 @@
+basePath: /
+definitions:
+  handlers.ErrorResponse:
+    properties:
+      code:
+        description: 'Optional: include app error code'
+        type: integer
+      error:
+        type: string
+    type: object
+  handlers.createSkinRequest:
+    properties:
+      condition:
+        type: number
+      gun:
+        type: string
+      image:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      rarity:
+        type: string
+    required:
+    - condition
+    - gun
+    - name
+    - price
+    - rarity
+    type: object
+  handlers.purchaseRequest:
+    properties:
+      skin_id:
+        type: string
+    required:
+    - skin_id
+    type: object
+  models.DepositRequest:
+    properties:
+      amount:
+        type: number
+    required:
+    - amount
+    type: object
+  models.Gun:
+    enum:
+    - AK-47
+    - M4A4
+    - M4A1-S
+    - Desert Eagle
+    - USP-S
+    - Glock-18
+    - P250
+    - Tec-9
+    - CZ75-Auto
+    - AWP
+    - SSG 08
+    - SCAR-20
+    - G3SG1
+    - MP9
+    - MAC-10
+    - MP7
+    - P90
+    - UMP-45
+    - PP-Bizon
+    - Nova
+    - XM1014
+    - MAG-7
+    - Sawed-Off
+    - M249
+    - Negev
+    - Karambit
+    - Butterfly Knife
+    - M9 Bayonet
+    - Bayonet
+    - Flip Knife
+    - Gut Knife
+    - Huntsman Knife
+    - Shadow Daggers
+    - Falchion Knife
+    - Bowie Knife
+    - Navaja Knife
+    - Stiletto Knife
+    - Ursus Knife
+    - Nomad Knife
+    - Paracord Knife
+    - Survival Knife
+    - Classic Knife
+    type: string
+    x-enum-varnames:
+    - AK47
+    - M4A4
+    - M4A1S
+    - DesertEagle
+    - USPS
+    - Glock18
+    - P250
+    - Tec9
+    - CZ75
+    - AWP
+    - SSG08
+    - SCAR20
+    - G3SG1
+    - MP9
+    - MAC10
+    - MP7
+    - P90
+    - UMP45
+    - PPBizon
+    - Nova
+    - XM1014
+    - MAG7
+    - SawedOff
+    - M249
+    - Negev
+    - Karambit
+    - Butterfly
+    - M9Bayonet
+    - Bayonet
+    - FlipKnife
+    - GutKnife
+    - Huntsman
+    - ShadowDaggers
+    - Falchion
+    - Bowie
+    - Navaja
+    - Stiletto
+    - Ursus
+    - Nomad
+    - Paracord
+    - Survival
+    - Classic
+  models.Order:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: string
+      status:
+        $ref: '#/definitions/models.OrderStatus'
+      totalAmount:
+        type: number
+      updatedAt:
+        type: string
+      userId:
+        type: string
+    type: object
+  models.OrderStatus:
+    enum:
+    - pending
+    - completed
+    - failed
+    - cancelled
+    type: string
+    x-enum-comments:
+      OrderStatusFailed: Add this - when payment/processing fails
+    x-enum-varnames:
+    - OrderStatusPending
+    - OrderStatusCompleted
+    - OrderStatusFailed
+    - OrderStatusCancelled
+  models.Skin:
+    properties:
+      available:
+        type: boolean
+      condition:
+        type: number
+      created_at:
+        type: string
+      gun:
+        $ref: '#/definitions/models.Gun'
+      id:
+        type: string
+      image:
+        type: string
+      name:
+        type: string
+      owner_id:
+        type: string
+      price:
+        type: number
+      rarity:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.Transaction:
+    properties:
+      amount:
+        type: number
+      balance_after:
+        type: number
+      balance_before:
+        type: number
+      created_at:
+        type: string
+      id:
+        type: string
+      type:
+        $ref: '#/definitions/models.TransactionType'
+      user_id:
+        type: string
+    type: object
+  models.TransactionType:
+    enum:
+    - withdraw
+    - deposit
+    type: string
+    x-enum-varnames:
+    - Withdraw
+    - Deposit
+  models.UserLoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.UserSignupRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  models.WithdrawRequest:
+    properties:
+      amount:
+        type: number
+    required:
+    - amount
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: A marketplace API for buying and selling CS:GO skins
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: CS:GO Skin Marketplace API
+  version: "1.0"
+paths:
+  /guns:
+    get:
+      description: Get a list of all available guns in the system
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of available guns
+          schema:
+            items:
+              $ref: '#/definitions/models.Gun'
+            type: array
+      summary: Get all available guns
+      tags:
+      - skins
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Login with email and password to receive JWT token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Authenticate user
+      tags:
+      - users
+  /marketplace/orders/{order_id}:
+    get:
+      description: Get details of a specific order by ID (only if owned by the user)
+      parameters:
+      - description: Order ID
+        format: uuid
+        in: path
+        name: order_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Order details
+          schema:
+            $ref: '#/definitions/models.Order'
+        "400":
+          description: Invalid order ID
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden - order not owned by user
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Order not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get order details
+      tags:
+      - marketplace
+  /marketplace/purchase:
+    post:
+      consumes:
+      - application/json
+      description: Purchase a skin from the marketplace using user's balance
+      parameters:
+      - description: Purchase request
+        in: body
+        name: purchase
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.purchaseRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Purchase successful
+          schema:
+            $ref: '#/definitions/models.Order'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Skin not available
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "422":
+          description: Insufficient funds
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Purchase a skin
+      tags:
+      - marketplace
+  /marketplace/skins:
+    get:
+      description: Get all skins available for purchase in the marketplace
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of available skins
+          schema:
+            items:
+              $ref: '#/definitions/models.Skin'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List available skins
+      tags:
+      - marketplace
+  /marketplace/skins/mine:
+    get:
+      description: Get all skins owned by the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of user's skins
+          schema:
+            items:
+              $ref: '#/definitions/models.Skin'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List user's skins
+      tags:
+      - marketplace
+  /signup:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account with email, password, and name
+      parameters:
+      - description: User registration data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.UserSignupRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User created successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: User already exists
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - users
+  /skins:
+    post:
+      consumes:
+      - application/json
+      description: Create a new skin and add it to the marketplace
+      parameters:
+      - description: Skin creation data
+        in: body
+        name: skin
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.createSkinRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Skin created successfully
+          schema:
+            $ref: '#/definitions/models.Skin'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new skin
+      tags:
+      - skins
+  /transactions/deposit:
+    post:
+      consumes:
+      - application/json
+      description: Deposit a specified amount to the user's balance
+      parameters:
+      - description: Deposit request
+        in: body
+        name: deposit
+        required: true
+        schema:
+          $ref: '#/definitions/models.DepositRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Deposit successful
+          schema:
+            $ref: '#/definitions/models.Transaction'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Deposit money to balance
+      tags:
+      - transactions
+  /transactions/history:
+    get:
+      description: Get the transaction history for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Transaction history
+          schema:
+            items:
+              $ref: '#/definitions/models.Transaction'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get transaction history
+      tags:
+      - transactions
+  /transactions/withdraw:
+    post:
+      consumes:
+      - application/json
+      description: Withdraw a specified amount from the user's balance
+      parameters:
+      - description: Withdrawal request
+        in: body
+        name: withdrawal
+        required: true
+        schema:
+          $ref: '#/definitions/models.WithdrawRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Withdrawal successful
+          schema:
+            $ref: '#/definitions/models.Transaction'
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "422":
+          description: Insufficient funds
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Withdraw money from balance
+      tags:
+      - transactions
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

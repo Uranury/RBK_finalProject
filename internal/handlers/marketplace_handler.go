@@ -21,6 +21,21 @@ type purchaseRequest struct {
 	SkinID string `json:"skin_id" binding:"required"`
 }
 
+// Purchase godoc
+// @Summary Purchase a skin
+// @Description Purchase a skin from the marketplace using user's balance
+// @Tags marketplace
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param purchase body purchaseRequest true "Purchase request"
+// @Success 201 {object} models.Order "Purchase successful"
+// @Failure 400 {object} ErrorResponse "Invalid request"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 404 {object} ErrorResponse "Skin not available"
+// @Failure 422 {object} ErrorResponse "Insufficient funds"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /marketplace/purchase [post]
 func (h *MarketplaceHandler) Purchase(c *gin.Context) {
 	var req purchaseRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -49,6 +64,16 @@ func (h *MarketplaceHandler) Purchase(c *gin.Context) {
 	c.JSON(http.StatusCreated, order)
 }
 
+// ListAvailable godoc
+// @Summary List available skins
+// @Description Get all skins available for purchase in the marketplace
+// @Tags marketplace
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {array} models.Skin "List of available skins"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /marketplace/skins [get]
 func (h *MarketplaceHandler) ListAvailable(c *gin.Context) {
 	skins, err := h.svc.ListAvailableSkins(c.Request.Context())
 	if err != nil {
@@ -58,6 +83,16 @@ func (h *MarketplaceHandler) ListAvailable(c *gin.Context) {
 	c.JSON(http.StatusOK, skins)
 }
 
+// ListMine godoc
+// @Summary List user's skins
+// @Description Get all skins owned by the authenticated user
+// @Tags marketplace
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {array} models.Skin "List of user's skins"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /marketplace/skins/mine [get]
 func (h *MarketplaceHandler) ListMine(c *gin.Context) {
 	userID, ok := middleware.GetUserID(c)
 	if !ok {
@@ -72,6 +107,20 @@ func (h *MarketplaceHandler) ListMine(c *gin.Context) {
 	c.JSON(http.StatusOK, skins)
 }
 
+// GetOrder godoc
+// @Summary Get order details
+// @Description Get details of a specific order by ID (only if owned by the user)
+// @Tags marketplace
+// @Produce json
+// @Security BearerAuth
+// @Param order_id path string true "Order ID" format(uuid)
+// @Success 200 {object} models.Order "Order details"
+// @Failure 400 {object} ErrorResponse "Invalid order ID"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden - order not owned by user"
+// @Failure 404 {object} ErrorResponse "Order not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /marketplace/orders/{order_id} [get]
 func (h *MarketplaceHandler) GetOrder(c *gin.Context) {
 	userID, ok := middleware.GetUserID(c)
 	if !ok {

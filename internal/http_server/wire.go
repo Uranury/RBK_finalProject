@@ -8,6 +8,7 @@ import (
 	"github.com/Uranury/RBK_finalProject/internal/handlers"
 	orderRepoPkg "github.com/Uranury/RBK_finalProject/internal/repositories/order"
 	skinRepoPkg "github.com/Uranury/RBK_finalProject/internal/repositories/skin"
+	transactionRepoPkg "github.com/Uranury/RBK_finalProject/internal/repositories/transaction"
 	"github.com/Uranury/RBK_finalProject/internal/repositories/user"
 	"github.com/Uranury/RBK_finalProject/internal/services"
 	"github.com/gin-gonic/gin"
@@ -18,17 +19,20 @@ func (s *Server) initDependencies() error {
 	userRepo := user.NewRepository(s.db)
 	skinRepo := skinRepoPkg.NewRepository(s.db)
 	ordRepo := orderRepoPkg.NewRepository(s.db)
+	transactionRepo := transactionRepoPkg.NewRepository(s.db)
 
 	// Initialize services
 	s.authService = auth.NewService(s.cfg.JWTKey)
 	userService := services.NewUser(userRepo, s.authService, s.logger)
 	skinService := services.NewSkin(skinRepo, s.logger)
 	marketplaceService := services.NewMarketplaceService(skinRepo, ordRepo, userRepo, s.asynqClient, s.db, s.logger)
+	transactionService := services.NewTransactionService(transactionRepo, userRepo, s.db, s.logger)
 
 	// Initialize handlers
 	s.userHandler = handlers.NewUserHandler(userService)
 	s.skinHandler = handlers.NewSkinHandler(skinService)
 	s.marketplaceHandler = handlers.NewMarketplaceHandler(marketplaceService)
+	s.transactionHandler = handlers.NewTransactionHandler(transactionService)
 
 	return nil
 }
