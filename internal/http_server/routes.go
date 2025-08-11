@@ -20,4 +20,6 @@ func (s *Server) setupRoutes() {
 	protected.GET("/marketplace/skins/mine", s.marketplaceHandler.ListMine)
 	protected.GET("/marketplace/orders/:order_id", s.marketplaceHandler.GetOrder)
 	protected.POST("/marketplace/purchase", s.marketplaceHandler.Purchase)
+	// Skin creation (protected)
+	protected.POST("/skins", s.skinHandler.Create)
 }

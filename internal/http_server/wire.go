@@ -22,10 +22,12 @@ func (s *Server) initDependencies() error {
 	// Initialize services
 	s.authService = auth.NewService(s.cfg.JWTKey)
 	userService := services.NewUser(userRepo, s.authService, s.logger)
+	skinService := services.NewSkin(skinRepo, s.logger)
 	marketplaceService := services.NewMarketplaceService(skinRepo, ordRepo, userRepo, s.asynqClient, s.db, s.logger)
 
 	// Initialize handlers
 	s.userHandler = handlers.NewUserHandler(userService)
+	s.skinHandler = handlers.NewSkinHandler(skinService)
 	s.marketplaceHandler = handlers.NewMarketplaceHandler(marketplaceService)
 
 	return nil

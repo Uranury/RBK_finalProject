@@ -24,6 +24,7 @@ type Server struct {
 	redisClient        *redis.Client
 	userHandler        *handlers.UserHandler
 	marketplaceHandler *handlers.MarketplaceHandler
+	skinHandler        *handlers.SkinHandler
 	logger             *slog.Logger
 }
 
