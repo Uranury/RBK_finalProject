@@ -37,9 +37,21 @@ func (h *SkinHandler) GetGuns(c *gin.Context) {
 	c.JSON(http.StatusOK, guns)
 }
 
+// GetWears godoc
+// @Summary Get all available wear levels
+// @Description Get a list of all available wear levels in the system
+// @Tags skins
+// @Produce json
+// @Success 200 {array} models.Wear "List of available wear levels"
+// @Router /wears [get]
+func (h *SkinHandler) GetWears(c *gin.Context) {
+	wears := h.svc.GetAllWears()
+	c.JSON(http.StatusOK, wears)
+}
+
 // Create godoc
 // @Summary Create a new skin
-// @Description Create a new skin and add it to the marketplace
+// @Description Create a new skin and add it to the marketplace. Wear is automatically calculated based on condition.
 // @Tags skins
 // @Accept json
 // @Produce json

@@ -21,6 +21,7 @@ func (s *Server) setupRoutes() {
 
 	// Public endpoints
 	s.router.GET("/guns", s.skinHandler.GetGuns)
+	s.router.GET("/wears", s.skinHandler.GetWears)
 
 	protected := s.router.Group("/", middleware.JWTAuthMiddleware(s.authService))
 	// Marketplace

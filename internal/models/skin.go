@@ -66,11 +66,40 @@ const (
 	Classic  Gun = "Classic Knife"
 )
 
+type Wear string
+
+const (
+	FactoryNew    Wear = "Factory New"
+	MinimalWear   Wear = "Minimal Wear"
+	FieldTested   Wear = "Field-Tested"
+	WellWorn      Wear = "Well-Worn"
+	BattleScarred Wear = "Battle-Scarred"
+)
+
+// GetWearFromCondition calculates the wear level based on condition value
+func GetWearFromCondition(condition float64) Wear {
+	switch {
+	case condition >= 0.00 && condition <= 0.07:
+		return FactoryNew
+	case condition > 0.07 && condition <= 0.15:
+		return MinimalWear
+	case condition > 0.15 && condition <= 0.38:
+		return FieldTested
+	case condition > 0.38 && condition <= 0.45:
+		return WellWorn
+	case condition > 0.45 && condition <= 1.00:
+		return BattleScarred
+	default:
+		return FieldTested // Default fallback
+	}
+}
+
 type Skin struct {
 	ID        uuid.UUID  `json:"id" db:"id"`
 	OwnerID   *uuid.UUID `json:"owner_id" db:"owner_id"`
 	Name      string     `json:"name" db:"name"`
 	Gun       Gun        `json:"gun" db:"gun"`
+	Wear      Wear       `json:"wear" db:"wear"`
 	Rarity    string     `json:"rarity" db:"rarity"`
 	Condition float64    `json:"condition" db:"condition"`
 	Price     float64    `json:"price" db:"price"`

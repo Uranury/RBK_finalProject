@@ -3,8 +3,12 @@ definitions:
   handlers.ErrorResponse:
     properties:
       code:
-        description: 'Optional: include app error code'
         type: integer
+      details:
+        additionalProperties:
+          type: string
+        description: Field-specific validation errors
+        type: object
       error:
         type: string
     type: object
@@ -184,6 +188,8 @@ definitions:
         type: string
       updated_at:
         type: string
+      wear:
+        $ref: '#/definitions/models.Wear'
     type: object
   models.Transaction:
     properties:
@@ -233,6 +239,20 @@ definitions:
     - name
     - password
     type: object
+  models.Wear:
+    enum:
+    - Factory New
+    - Minimal Wear
+    - Field-Tested
+    - Well-Worn
+    - Battle-Scarred
+    type: string
+    x-enum-varnames:
+    - FactoryNew
+    - MinimalWear
+    - FieldTested
+    - WellWorn
+    - BattleScarred
   models.WithdrawRequest:
     properties:
       amount:
@@ -485,7 +505,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new skin and add it to the marketplace
+      description: Create a new skin and add it to the marketplace. Wear is automatically
+        calculated based on condition.
       parameters:
       - description: Skin creation data
         in: body
@@ -618,6 +639,21 @@ paths:
       summary: Withdraw money from balance
       tags:
       - transactions
+  /wears:
+    get:
+      description: Get a list of all available wear levels in the system
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of available wear levels
+          schema:
+            items:
+              $ref: '#/definitions/models.Wear'
+            type: array
+      summary: Get all available wear levels
+      tags:
+      - skins
 securityDefinitions:
   BearerAuth:
     description: Type "Bearer" followed by a space and JWT token.

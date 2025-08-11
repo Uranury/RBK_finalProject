@@ -384,7 +384,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Create a new skin and add it to the marketplace",
+                "description": "Create a new skin and add it to the marketplace. Wear is automatically calculated based on condition.",
                 "consumes": [
                     "application/json"
                 ],
@@ -593,6 +593,29 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/wears": {
+            "get": {
+                "description": "Get a list of all available wear levels in the system",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "skins"
+                ],
+                "summary": "Get all available wear levels",
+                "responses": {
+                    "200": {
+                        "description": "List of available wear levels",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Wear"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -600,8 +623,14 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "code": {
-                    "description": "Optional: include app error code",
                     "type": "integer"
+                },
+                "details": {
+                    "description": "Field-specific validation errors",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 },
                 "error": {
                     "type": "string"
@@ -827,6 +856,9 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                },
+                "wear": {
+                    "$ref": "#/definitions/models.Wear"
                 }
             }
         },
@@ -900,6 +932,23 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "models.Wear": {
+            "type": "string",
+            "enum": [
+                "Factory New",
+                "Minimal Wear",
+                "Field-Tested",
+                "Well-Worn",
+                "Battle-Scarred"
+            ],
+            "x-enum-varnames": [
+                "FactoryNew",
+                "MinimalWear",
+                "FieldTested",
+                "WellWorn",
+                "BattleScarred"
+            ]
         },
         "models.WithdrawRequest": {
             "type": "object",

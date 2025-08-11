@@ -29,16 +29,19 @@ func NewTransactionService(transactionRepo transaction.Repository, userRepo user
 	}
 }
 
+// Withdraw handles withdrawing money from user's balance
 func (s *TransactionService) Withdraw(ctx context.Context, userID uuid.UUID, amount float64) (*models.Transaction, error) {
-	if amount <= 0 {
-		return nil, apperrors.NewValidationError("amount must be greater than 0")
-	}
 	s.logger.Info("starting withdrawal", "user_id", userID, "amount", amount)
+
+	// Validate amount
+	if amount <= 0 {
+		return nil, apperrors.NewValidationError("Withdrawal amount must be greater than zero")
+	}
 
 	tx, err := s.db.BeginTxx(ctx, nil)
 	if err != nil {
 		s.logger.Error("failed to start transaction", "error", err)
-		return nil, apperrors.WrapInternal(err, "failed to start withdrawal transaction")
+		return nil, apperrors.NewInternalError("Failed to process withdrawal", err)
 	}
 	defer func(tx *sqlx.Tx) {
 		if err := tx.Rollback(); err != nil {
@@ -46,27 +49,30 @@ func (s *TransactionService) Withdraw(ctx context.Context, userID uuid.UUID, amo
 		}
 	}(tx)
 
+	// Get current user balance
 	user, err := s.userRepo.GetUserByIdForUpdate(ctx, tx, userID)
 	if err != nil {
 		s.logger.Error("failed to get user for update", "error", err, "user_id", userID)
-		return nil, apperrors.WrapInternal(err, "failed to get user balance")
+		return nil, apperrors.NewInternalError("Failed to process withdrawal", err)
 	}
 	if user == nil {
-		return nil, apperrors.NewNotFoundError("user not found")
+		return nil, apperrors.NewNotFoundError("User not found")
 	}
 
 	balanceBefore := user.Balance
 	if balanceBefore < amount {
 		s.logger.Warn("insufficient funds for withdrawal", "user_id", userID, "balance", balanceBefore, "requested", amount)
-		return nil, apperrors.NewValidationError("insufficient funds")
+		return nil, apperrors.NewValidationError("Insufficient funds for withdrawal")
 	}
 
+	// Update user balance
 	newBalance := balanceBefore - amount
 	if err := s.userRepo.UpdateBalance(ctx, tx, userID, newBalance); err != nil {
 		s.logger.Error("failed to update user balance", "error", err, "user_id", userID)
-		return nil, apperrors.WrapInternal(err, "failed to update balance")
+		return nil, apperrors.NewInternalError("Failed to process withdrawal", err)
 	}
 
+	// Create transaction record
 	now := time.Now()
 	transaction := &models.Transaction{
 		ID:            uuid.New(),
@@ -80,12 +86,13 @@ func (s *TransactionService) Withdraw(ctx context.Context, userID uuid.UUID, amo
 
 	if err := s.transactionRepo.Create(ctx, tx, transaction); err != nil {
 		s.logger.Error("failed to create transaction record", "error", err, "user_id", userID)
-		return nil, apperrors.WrapInternal(err, "failed to record transaction")
+		return nil, apperrors.NewInternalError("Failed to process withdrawal", err)
 	}
 
+	// Commit transaction
 	if err := tx.Commit(); err != nil {
 		s.logger.Error("failed to commit transaction", "error", err, "user_id", userID)
-		return nil, apperrors.WrapInternal(err, "failed to complete withdrawal")
+		return nil, apperrors.NewInternalError("Failed to process withdrawal", err)
 	}
 
 	s.logger.Info("withdrawal completed successfully",
@@ -97,16 +104,19 @@ func (s *TransactionService) Withdraw(ctx context.Context, userID uuid.UUID, amo
 	return transaction, nil
 }
 
+// Deposit handles depositing money to user's balance
 func (s *TransactionService) Deposit(ctx context.Context, userID uuid.UUID, amount float64) (*models.Transaction, error) {
-	if amount <= 0 {
-		return nil, apperrors.NewValidationError("amount must be greater than 0")
-	}
 	s.logger.Info("starting deposit", "user_id", userID, "amount", amount)
+
+	// Validate amount
+	if amount <= 0 {
+		return nil, apperrors.NewValidationError("Deposit amount must be greater than zero")
+	}
 
 	tx, err := s.db.BeginTxx(ctx, nil)
 	if err != nil {
 		s.logger.Error("failed to start transaction", "error", err)
-		return nil, apperrors.WrapInternal(err, "failed to start deposit transaction")
+		return nil, apperrors.NewInternalError("Failed to process deposit", err)
 	}
 	defer func(tx *sqlx.Tx) {
 		if err := tx.Rollback(); err != nil {
@@ -114,23 +124,26 @@ func (s *TransactionService) Deposit(ctx context.Context, userID uuid.UUID, amou
 		}
 	}(tx)
 
+	// Get current user balance
 	user, err := s.userRepo.GetUserByIdForUpdate(ctx, tx, userID)
 	if err != nil {
 		s.logger.Error("failed to get user for update", "error", err, "user_id", userID)
-		return nil, apperrors.WrapInternal(err, "failed to get user balance")
+		return nil, apperrors.NewInternalError("Failed to process deposit", err)
 	}
 	if user == nil {
-		return nil, apperrors.NewNotFoundError("user not found")
+		return nil, apperrors.NewNotFoundError("User not found")
 	}
 
 	balanceBefore := user.Balance
 	newBalance := balanceBefore + amount
 
+	// Update user balance
 	if err := s.userRepo.UpdateBalance(ctx, tx, userID, newBalance); err != nil {
 		s.logger.Error("failed to update user balance", "error", err, "user_id", userID)
-		return nil, apperrors.WrapInternal(err, "failed to update balance")
+		return nil, apperrors.NewInternalError("Failed to process deposit", err)
 	}
 
+	// Create transaction record
 	now := time.Now()
 	transaction := &models.Transaction{
 		ID:            uuid.New(),
@@ -144,12 +157,13 @@ func (s *TransactionService) Deposit(ctx context.Context, userID uuid.UUID, amou
 
 	if err := s.transactionRepo.Create(ctx, tx, transaction); err != nil {
 		s.logger.Error("failed to create transaction record", "error", err, "user_id", userID)
-		return nil, apperrors.WrapInternal(err, "failed to record transaction")
+		return nil, apperrors.NewInternalError("Failed to process deposit", err)
 	}
 
+	// Commit transaction
 	if err := tx.Commit(); err != nil {
 		s.logger.Error("failed to commit transaction", "error", err, "user_id", userID)
-		return nil, apperrors.WrapInternal(err, "failed to complete deposit")
+		return nil, apperrors.NewInternalError("Failed to process deposit", err)
 	}
 
 	s.logger.Info("deposit completed successfully",
@@ -165,7 +179,7 @@ func (s *TransactionService) Deposit(ctx context.Context, userID uuid.UUID, amou
 func (s *TransactionService) GetUserTransactions(ctx context.Context, userID uuid.UUID) ([]*models.Transaction, error) {
 	transactions, err := s.transactionRepo.GetUserTransactions(ctx, userID)
 	if err != nil {
-		return nil, apperrors.WrapInternal(err, "failed to get user transactions")
+		return nil, apperrors.NewInternalError("Failed to retrieve transaction history", err)
 	}
 	return transactions, nil
 }
