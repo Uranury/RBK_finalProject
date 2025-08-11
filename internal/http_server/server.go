@@ -2,6 +2,9 @@ package http_server
 
 import (
 	"context"
+	"log/slog"
+	"net/http"
+
 	"github.com/Uranury/RBK_finalProject/internal/auth"
 	"github.com/Uranury/RBK_finalProject/internal/handlers"
 	"github.com/Uranury/RBK_finalProject/pkg/config"
@@ -9,20 +12,19 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/jmoiron/sqlx"
 	"github.com/redis/go-redis/v9"
-	"log/slog"
-	"net/http"
 )
 
 type Server struct {
-	router      *gin.Engine
-	httpServer  *http.Server
-	cfg         *config.Config
-	db          *sqlx.DB
-	asynqClient *asynq.Client
-	authService *auth.Service
-	redisClient *redis.Client
-	userHandler *handlers.UserHandler
-	logger      *slog.Logger
+	router             *gin.Engine
+	httpServer         *http.Server
+	cfg                *config.Config
+	db                 *sqlx.DB
+	asynqClient        *asynq.Client
+	authService        *auth.Service
+	redisClient        *redis.Client
+	userHandler        *handlers.UserHandler
+	marketplaceHandler *handlers.MarketplaceHandler
+	logger             *slog.Logger
 }
 
 func NewServer(

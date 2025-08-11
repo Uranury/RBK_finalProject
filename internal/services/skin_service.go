@@ -44,7 +44,7 @@ func (s *Skin) CreateSkin(ctx context.Context, skin *models.Skin) (*models.Skin,
 	skin.Available = true // New skins are available by default
 	skin.OwnerID = nil
 
-	if err := s.repo.CreateSkin(ctx, skin); err != nil {
+	if err := s.repo.Create(ctx, skin); err != nil {
 		s.logger.Error("failed to create skin in repository", "error", err)
 		return nil, apperrors.WrapInternal(err, "failed to create skin")
 	}

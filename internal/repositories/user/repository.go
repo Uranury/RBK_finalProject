@@ -67,7 +67,7 @@ func (r *repository) GetBalance(ctx context.Context, userID uuid.UUID) (float64,
 }
 
 func (r *repository) UpdateBalance(ctx context.Context, tx *sqlx.Tx, userID uuid.UUID, newBalance float64) error {
-	_, err := tx.ExecContext(ctx, "UPDATE users SET balance = $1 WHERE id = $2", newBalance, userID)
+	_, err := tx.ExecContext(ctx, "UPDATE users SET balance = $1, updated_at = NOW() WHERE id = $2", newBalance, userID)
 	return err
 }
 

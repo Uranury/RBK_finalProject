@@ -8,7 +8,7 @@ import (
 )
 
 type Repository interface {
-	CreateSkin(ctx context.Context, skin *models.Skin) error
+	Create(ctx context.Context, skin *models.Skin) error
 	GetSkin(ctx context.Context, id uuid.UUID) (*models.Skin, error)
 	GetUserSkins(ctx context.Context, userID uuid.UUID) ([]*models.Skin, error)
 	GetAvailableSkins(ctx context.Context) ([]*models.Skin, error)

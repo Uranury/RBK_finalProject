@@ -15,7 +15,6 @@ func (s *Server) setupRoutes() {
 	s.router.POST("/login", s.userHandler.Login)
 
 	protected := s.router.Group("/", middleware.JWTAuthMiddleware(s.authService))
-	protected.GET("/lol", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "kek"})
-	})
+	// Marketplace
+	protected.POST("/marketplace/purchase", s.marketplaceHandler.Purchase)
 }

@@ -1,12 +1,20 @@
 package services
 
 import (
+	"context"
+	"database/sql"
+	"errors"
+	"log/slog"
+	"time"
+
+	"github.com/Uranury/RBK_finalProject/internal/models"
 	"github.com/Uranury/RBK_finalProject/internal/repositories/order"
 	"github.com/Uranury/RBK_finalProject/internal/repositories/skin"
 	"github.com/Uranury/RBK_finalProject/internal/repositories/user"
+	"github.com/Uranury/RBK_finalProject/pkg/apperrors"
+	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	"github.com/jmoiron/sqlx"
-	"log/slog"
 )
 
 // TODO: Write orderRepo methods
@@ -30,7 +38,6 @@ func NewMarketplaceService(skinRepo skin.Repository,
 	return &MarketplaceService{skinRepo, orderRepo, userRepo, emailQueue, db, logger}
 }
 
-/*
 // PurchaseSkin handles buying a single skin
 func (s *MarketplaceService) PurchaseSkin(ctx context.Context, userID uuid.UUID, skinID uuid.UUID) (*models.Order, error) {
 	s.logger.Info("starting skin purchase", "user_id", userID, "skin_id", skinID)
@@ -42,8 +49,7 @@ func (s *MarketplaceService) PurchaseSkin(ctx context.Context, userID uuid.UUID,
 		return nil, apperrors.WrapInternal(err, "failed to start purchase transaction")
 	}
 	defer func(tx *sqlx.Tx) {
-		err := tx.Rollback()
-		if err != nil {
+		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
 			s.logger.Error("failed to rollback transaction", "error", err)
 		}
 	}(tx) // Will be ignored if tx.Commit() succeeds
@@ -65,15 +71,15 @@ func (s *MarketplaceService) PurchaseSkin(ctx context.Context, userID uuid.UUID,
 	// Step 2: Get and check user's balance
 	usr, err := s.userRepo.GetUserByIdForUpdate(ctx, tx, userID)
 	if err != nil {
-		s.logger.Error("failed to get usr for update", "error", err, "user_id", userID)
-		return nil, apperrors.WrapInternal(err, "failed to check usr balance")
+		s.logger.Error("failed to get user for update", "error", err, "user_id", userID)
+		return nil, apperrors.WrapInternal(err, "failed to check user balance")
 	}
 	if usr.Balance < skinToPurchase.Price {
 		s.logger.Warn("insufficient funds", "user_id", userID, "balance", usr.Balance, "required", skinToPurchase.Price)
 		return nil, apperrors.NewValidationError("insufficient funds")
 	}
 
-	// Step 3: Create ord record
+	// Step 3: Create order record
 	now := time.Now()
 	ord := &models.Order{
 		ID:          uuid.New(),
@@ -81,30 +87,32 @@ func (s *MarketplaceService) PurchaseSkin(ctx context.Context, userID uuid.UUID,
 		TotalAmount: skinToPurchase.Price,
 		Status:      models.OrderStatusPending,
 		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 
 	if err := s.orderRepo.Create(ctx, tx, ord); err != nil {
-		s.logger.Error("failed to create ord", "error", err, "order_id", ord.ID)
-		return nil, apperrors.WrapInternal(err, "failed to create ord")
+		s.logger.Error("failed to create order", "error", err, "order_id", ord.ID)
+		return nil, apperrors.WrapInternal(err, "failed to create order")
 	}
 
-	// Step 4: Create ord item
+	// Step 4: Create order item
 	orderItem := &models.OrderItem{
-		ID:      uuid.New(),
-		OrderID: ord.ID,
-		SkinID:  skinID,
-		Price:   skinToPurchase.Price,
+		ID:        uuid.New(),
+		OrderID:   ord.ID,
+		SkinID:    skinID,
+		Price:     skinToPurchase.Price,
+		CreatedAt: now,
 	}
 
 	if err := s.orderRepo.CreateOrderItem(ctx, tx, orderItem); err != nil {
-		s.logger.Error("failed to create ord item", "error", err, "order_id", ord.ID)
-		return nil, apperrors.WrapInternal(err, "failed to create ord item")
+		s.logger.Error("failed to create order item", "error", err, "order_id", ord.ID)
+		return nil, apperrors.WrapInternal(err, "failed to create order item")
 	}
 
-	// Step 5: Update usr balance
+	// Step 5: Update user balance
 	newBalance := usr.Balance - skinToPurchase.Price
 	if err := s.userRepo.UpdateBalance(ctx, tx, userID, newBalance); err != nil {
-		s.logger.Error("failed to update usr balance", "error", err, "user_id", userID)
+		s.logger.Error("failed to update user balance", "error", err, "user_id", userID)
 		return nil, apperrors.WrapInternal(err, "failed to update balance")
 	}
 
@@ -114,11 +122,11 @@ func (s *MarketplaceService) PurchaseSkin(ctx context.Context, userID uuid.UUID,
 		return nil, apperrors.WrapInternal(err, "failed to transfer skin ownership")
 	}
 
-	// Step 7: Update ord status to completed
+	// Step 7: Update order status to completed
 	ord.Status = models.OrderStatusCompleted
 	if err := s.orderRepo.UpdateStatus(ctx, tx, ord.ID, models.OrderStatusCompleted); err != nil {
-		s.logger.Error("failed to update ord status", "error", err, "order_id", ord.ID)
-		return nil, apperrors.WrapInternal(err, "failed to complete ord")
+		s.logger.Error("failed to update order status", "error", err, "order_id", ord.ID)
+		return nil, apperrors.WrapInternal(err, "failed to complete order")
 	}
 
 	// Commit transaction
@@ -133,12 +141,5 @@ func (s *MarketplaceService) PurchaseSkin(ctx context.Context, userID uuid.UUID,
 		"order_id", ord.ID,
 		"amount", skinToPurchase.Price)
 
-	// Step 8: Queue background job for email (after transaction commits)
-	if err := s.queueEmailJob(ord.ID, usr.Email); err != nil {
-		// Don't fail the purchase if email queuing fails - just log it
-		s.logger.Error("failed to queue email job", "error", err, "order_id", ord.ID)
-	}
-
 	return ord, nil
 }
-*/
