@@ -143,3 +143,33 @@ func (s *MarketplaceService) PurchaseSkin(ctx context.Context, userID uuid.UUID,
 
 	return ord, nil
 }
+
+// ListAvailableSkins returns all skins that can be purchased
+func (s *MarketplaceService) ListAvailableSkins(ctx context.Context) ([]*models.Skin, error) {
+	skins, err := s.skinRepo.GetAvailableSkins(ctx)
+	if err != nil {
+		return nil, apperrors.WrapInternal(err, "failed to list available skins")
+	}
+	return skins, nil
+}
+
+// ListUserSkins returns all skins owned by the given user
+func (s *MarketplaceService) ListUserSkins(ctx context.Context, userID uuid.UUID) ([]*models.Skin, error) {
+	skins, err := s.skinRepo.GetUserSkins(ctx, userID)
+	if err != nil {
+		return nil, apperrors.WrapInternal(err, "failed to list user skins")
+	}
+	return skins, nil
+}
+
+// GetOrder returns an order by id
+func (s *MarketplaceService) GetOrder(ctx context.Context, orderID uuid.UUID) (*models.Order, error) {
+	ord, err := s.orderRepo.GetOrderByID(ctx, orderID)
+	if err != nil {
+		return nil, apperrors.WrapInternal(err, "failed to get order")
+	}
+	if ord == nil {
+		return nil, apperrors.NewNotFoundError("order not found")
+	}
+	return ord, nil
+}

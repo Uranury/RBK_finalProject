@@ -18,7 +18,7 @@ func NewMarketplaceHandler(svc *services.MarketplaceService) *MarketplaceHandler
 }
 
 type purchaseRequest struct {
-	SkinID string `json:"skinId" binding:"required"`
+	SkinID string `json:"skin_id" binding:"required"`
 }
 
 func (h *MarketplaceHandler) Purchase(c *gin.Context) {
@@ -47,4 +47,53 @@ func (h *MarketplaceHandler) Purchase(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, order)
+}
+
+func (h *MarketplaceHandler) ListAvailable(c *gin.Context) {
+	skins, err := h.svc.ListAvailableSkins(c.Request.Context())
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, skins)
+}
+
+func (h *MarketplaceHandler) ListMine(c *gin.Context) {
+	userID, ok := middleware.GetUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	skins, err := h.svc.ListUserSkins(c.Request.Context(), userID)
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, skins)
+}
+
+func (h *MarketplaceHandler) GetOrder(c *gin.Context) {
+	userID, ok := middleware.GetUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	orderIDStr := c.Param("order_id")
+	orderID, err := uuid.Parse(orderIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid order id"})
+		return
+	}
+
+	ord, err := h.svc.GetOrder(c.Request.Context(), orderID)
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+	if ord.UserID != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		return
+	}
+	c.JSON(http.StatusOK, ord)
 }

@@ -16,5 +16,8 @@ func (s *Server) setupRoutes() {
 
 	protected := s.router.Group("/", middleware.JWTAuthMiddleware(s.authService))
 	// Marketplace
+	protected.GET("/marketplace/skins", s.marketplaceHandler.ListAvailable)
+	protected.GET("/marketplace/skins/mine", s.marketplaceHandler.ListMine)
+	protected.GET("/marketplace/orders/:order_id", s.marketplaceHandler.GetOrder)
 	protected.POST("/marketplace/purchase", s.marketplaceHandler.Purchase)
 }
