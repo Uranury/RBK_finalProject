@@ -107,27 +107,3 @@ func (s *Skin) GetSkinByID(ctx context.Context, id uuid.UUID) (*models.Skin, err
 	}
 	return sk, nil
 }
-
-func (s *Skin) GetAvailableSkins(ctx context.Context) ([]*models.Skin, error) {
-	sks, err := s.repo.GetAvailableSkins(ctx)
-	if err != nil {
-		s.logger.Error("failed to get available skins in repository", "error", err)
-		return nil, apperrors.NewInternalError("Failed to retrieve available skins", err)
-	}
-	if len(sks) == 0 {
-		return []*models.Skin{}, nil
-	}
-	return sks, nil
-}
-
-func (s *Skin) GetUserSkins(ctx context.Context, userID uuid.UUID) ([]*models.Skin, error) {
-	sks, err := s.repo.GetUserSkins(ctx, userID)
-	if err != nil {
-		s.logger.Error("failed to get user skins in repository", "error", err)
-		return nil, apperrors.NewInternalError("Failed to retrieve user skins", err)
-	}
-	if len(sks) == 0 {
-		return []*models.Skin{}, nil
-	}
-	return sks, nil
-}

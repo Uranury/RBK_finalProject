@@ -54,6 +54,13 @@ func NewValidationError(message string) *AppError {
 	}
 }
 
+func NewForbiddenError(message string) *AppError {
+	return &AppError{
+		Code:    CodeForbidden,
+		Message: message,
+	}
+}
+
 func NewAlreadyExistsError(message string) *AppError {
 	return &AppError{
 		Code:    CodeAlreadyExists,

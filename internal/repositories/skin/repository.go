@@ -91,3 +91,18 @@ func (r *repository) UpdateOwnership(ctx context.Context, tx *sqlx.Tx, skinIDs [
 	_, err = tx.ExecContext(ctx, query, args...)
 	return err
 }
+
+func (r *repository) UpdateForSale(ctx context.Context, tx *sqlx.Tx, skinID uuid.UUID, price float64, available bool) error {
+	_, err := tx.ExecContext(ctx,
+		`UPDATE skins 
+         SET price = $1, available = $2, updated_at = NOW() 
+         WHERE id = $3`,
+		price, available, skinID)
+	return err
+}
+
+func (r *repository) UpdateAvailability(ctx context.Context, tx *sqlx.Tx, skinID uuid.UUID, available bool) error {
+	query := `UPDATE skins SET available = $1, updated_at = NOW() WHERE id = $2`
+	_, err := tx.ExecContext(ctx, query, available, skinID)
+	return err
+}
