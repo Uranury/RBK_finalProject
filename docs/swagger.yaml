@@ -515,37 +515,12 @@ paths:
       summary: List available skins
       tags:
       - marketplace
-  /marketplace/skins/mine:
-    get:
-      description: Get all skins owned by the authenticated user
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: List of user's skins
-          schema:
-            items:
-              $ref: '#/definitions/models.Skin'
-            type: array
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: List user's skins
-      tags:
-      - marketplace
-  /marketplace/skins/remove:
-    get:
+  /marketplace/skins/{skin_id}:
+    delete:
       description: Remove a user's skin from listing
       parameters:
       - description: Skin ID to remove from listing
-        in: query
+        in: path
         name: skin_id
         required: true
         type: string
@@ -572,7 +547,34 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Remove a skin
+      tags:
+      - marketplace
+  /marketplace/skins/mine:
+    get:
+      description: Get all skins owned by the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of user's skins
+          schema:
+            items:
+              $ref: '#/definitions/models.Skin'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List user's skins
       tags:
       - marketplace
   /profile:

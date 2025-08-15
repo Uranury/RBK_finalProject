@@ -116,16 +116,17 @@ func (h *MarketplaceHandler) Sell(c *gin.Context) {
 // @Description Remove a user's skin from listing
 // @Tags marketplace
 // @Produce json
-// @Param skin_id query string true "Skin ID to remove from listing"
+// @Security BearerAuth
+// @Param skin_id path string true "Skin ID to remove from listing"
 // @Success 200 {string} string "Skin ID removed successfully"
 // @Failure 400 {object} ErrorResponse "Invalid request"
 // @Failure 401 {object} ErrorResponse "Unauthorized"
 // @Failure 404 {object} ErrorResponse "Skin not available"
 // @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /marketplace/skins/remove [get]
+// @Router /marketplace/skins/{skin_id} [delete]
 func (h *MarketplaceHandler) RemoveFromListing(c *gin.Context) {
-	querySkinID := c.Query("skin_id")
-	if querySkinID == "" {
+	pathSkinID := c.Param("skin_id")
+	if pathSkinID == "" {
 		HandleError(c, apperrors.NewValidationError("skin_id required"))
 	}
 
@@ -135,7 +136,7 @@ func (h *MarketplaceHandler) RemoveFromListing(c *gin.Context) {
 		return
 	}
 
-	skinID, err := uuid.Parse(querySkinID)
+	skinID, err := uuid.Parse(pathSkinID)
 	if err != nil {
 		HandleError(c, apperrors.NewValidationError("invalid skin_id"))
 		return

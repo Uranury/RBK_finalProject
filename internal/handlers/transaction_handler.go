@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/Uranury/RBK_finalProject/pkg/apperrors"
 	"net/http"
 
 	"github.com/Uranury/RBK_finalProject/internal/middleware"
@@ -34,7 +35,7 @@ func NewTransactionHandler(svc *services.TransactionService) *TransactionHandler
 func (h *TransactionHandler) Withdraw(c *gin.Context) {
 	userID, ok := middleware.GetUserID(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		HandleError(c, apperrors.ErrUnauthorized)
 		return
 	}
 
@@ -69,7 +70,7 @@ func (h *TransactionHandler) Withdraw(c *gin.Context) {
 func (h *TransactionHandler) Deposit(c *gin.Context) {
 	userID, ok := middleware.GetUserID(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		HandleError(c, apperrors.ErrUnauthorized)
 		return
 	}
 
@@ -101,7 +102,7 @@ func (h *TransactionHandler) Deposit(c *gin.Context) {
 func (h *TransactionHandler) GetHistory(c *gin.Context) {
 	userID, ok := middleware.GetUserID(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		HandleError(c, apperrors.ErrUnauthorized)
 		return
 	}
 

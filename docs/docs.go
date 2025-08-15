@@ -386,8 +386,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/marketplace/skins/remove": {
-            "get": {
+        "/marketplace/skins/{skin_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Remove a user's skin from listing",
                 "produces": [
                     "application/json"
@@ -401,7 +406,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Skin ID to remove from listing",
                         "name": "skin_id",
-                        "in": "query",
+                        "in": "path",
                         "required": true
                     }
                 ],
