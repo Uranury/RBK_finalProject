@@ -17,7 +17,7 @@ func NewMarketplaceHandler(svc *services.MarketplaceService) *MarketplaceHandler
 	return &MarketplaceHandler{svc: svc}
 }
 
-type marketplaceRequest struct {
+type purchaseRequest struct {
 	SkinID string `json:"skin_id" binding:"required"`
 }
 
@@ -28,7 +28,7 @@ type marketplaceRequest struct {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param purchase body marketplaceRequest true "Purchase request"
+// @Param purchase body purchaseRequest true "Purchase request"
 // @Success 201 {object} models.Order "Purchase successful"
 // @Failure 400 {object} ErrorResponse "Invalid request"
 // @Failure 401 {object} ErrorResponse "Unauthorized"
@@ -37,7 +37,7 @@ type marketplaceRequest struct {
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /marketplace/purchase [post]
 func (h *MarketplaceHandler) Purchase(c *gin.Context) {
-	var req marketplaceRequest
+	var req purchaseRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		HandleError(c, err)
 		return
@@ -62,6 +62,52 @@ func (h *MarketplaceHandler) Purchase(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, order)
+}
+
+type sellRequest struct {
+	SkinID string  `json:"skin_id" binding:"required"`
+	Price  float64 `json:"price" binding:"required,gt=0,lte=1000000" description:"price must be > 0 and <= 1,000,000"`
+}
+
+// Sell godoc
+// @Summary Sell a skin
+// @Description Sell a skin that you own. Price must be > 0 and <= 1,000,000.
+// @Tags marketplace
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param purchase body sellRequest true "Sell request"
+// @Success 201 {string} string "UUID of listed skin"
+// @Failure 400 {object} ErrorResponse "Invalid request (e.g., invalid skinID, invalid price, skin already listed)"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden: skin ownership required"
+// @Failure 404 {object} ErrorResponse "Skin not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /marketplace/sell [post]
+func (h *MarketplaceHandler) Sell(c *gin.Context) {
+	var req sellRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		HandleError(c, err)
+		return
+	}
+
+	userID, ok := middleware.GetUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	skinID, err := uuid.Parse(req.SkinID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid skinId"})
+		return
+	}
+
+	if err := h.svc.SellSkin(c.Request.Context(), userID, skinID, req.Price); err != nil {
+		HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusCreated, skinID)
 }
 
 // RemoveFromListing godoc

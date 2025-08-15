@@ -101,6 +101,12 @@ func (r *repository) UpdateForSale(ctx context.Context, tx *sqlx.Tx, skinID uuid
 	return err
 }
 
+func (r *repository) UpdatePrice(ctx context.Context, tx *sqlx.Tx, skinID uuid.UUID, price float64) error {
+	query := `UPDATE skins SET price = $1, updated_at = NOW() WHERE id = $2`
+	_, err := tx.ExecContext(ctx, query, price, skinID)
+	return err
+}
+
 func (r *repository) UpdateAvailability(ctx context.Context, tx *sqlx.Tx, skinID uuid.UUID, available bool) error {
 	query := `UPDATE skins SET available = $1, updated_at = NOW() WHERE id = $2`
 	_, err := tx.ExecContext(ctx, query, available, skinID)

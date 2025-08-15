@@ -14,6 +14,7 @@ type Repository interface {
 	GetAvailableSkins(ctx context.Context) ([]*models.Skin, error)
 	GetSkinsForUpdate(ctx context.Context, tx *sqlx.Tx, skinIDs []uuid.UUID) ([]*models.Skin, error)
 	UpdateOwnership(ctx context.Context, tx *sqlx.Tx, skinIDs []uuid.UUID, newOwnerID uuid.UUID) error
+	UpdatePrice(ctx context.Context, tx *sqlx.Tx, skinID uuid.UUID, price float64) error
 	UpdateForSale(ctx context.Context, tx *sqlx.Tx, skinID uuid.UUID, price float64, available bool) error
 	UpdateAvailability(ctx context.Context, tx *sqlx.Tx, skinID uuid.UUID, available bool) error
 }

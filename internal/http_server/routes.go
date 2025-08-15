@@ -9,8 +9,6 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-// TODO: Consider doing the same for Purchase endpoint
-
 func (s *Server) setupRoutes() {
 	s.router.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "pong"})

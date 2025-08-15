@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/Uranury/RBK_finalProject/internal/repositories/transaction"
 	"log/slog"
 	"time"
@@ -344,4 +345,93 @@ func (s *MarketplaceService) GetOrder(ctx context.Context, orderID uuid.UUID) (*
 		return nil, apperrors.NewNotFoundError("order not found")
 	}
 	return ord, nil
+}
+
+// SellSkin allows users to list their owned skins for sale on the marketplace
+func (s *MarketplaceService) SellSkin(ctx context.Context, userID uuid.UUID, skinID uuid.UUID, price float64) error {
+	s.logger.Info("starting skin listing for sale",
+		"user_id", userID,
+		"skin_id", skinID,
+		"price", price)
+
+	// Validate price
+	if price <= 0 {
+		s.logger.Warn("invalid price for skin listing", "user_id", userID, "skin_id", skinID, "price", price)
+		return apperrors.NewValidationError("price must be greater than 0")
+	}
+
+	const maxPrice = 1000000.0
+	if price > maxPrice {
+		s.logger.Warn("price exceeds maximum allowed", "user_id", userID, "skin_id", skinID, "price", price)
+		return apperrors.NewValidationError(fmt.Sprintf("price cannot exceed %.2f", maxPrice))
+	}
+
+	tx, err := s.db.BeginTxx(ctx, nil)
+	if err != nil {
+		s.logger.Error("failed to begin transaction", "error", err)
+		return apperrors.WrapInternal(err, "failed to begin transaction")
+	}
+
+	defer func(tx *sqlx.Tx) {
+		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
+			s.logger.Error("failed to rollback transaction", "error", err)
+		}
+	}(tx)
+
+	skins, err := s.skinRepo.GetSkinsForUpdate(ctx, tx, []uuid.UUID{skinID})
+	if err != nil {
+		s.logger.Error("failed to get skin for update", "error", err, "skin_id", skinID)
+		return apperrors.WrapInternal(err, "failed to get skin for update")
+	}
+
+	if len(skins) == 0 {
+		s.logger.Warn("skin not found", "skin_id", skinID)
+		return apperrors.NewNotFoundError("skin not found")
+	}
+
+	skinToSell := skins[0]
+
+	if skinToSell.OwnerID == nil || *skinToSell.OwnerID != userID {
+		s.logger.Warn("user doesn't own this skin",
+			"user_id", userID,
+			"skin_id", skinID,
+			"actual_owner", skinToSell.OwnerID)
+		return apperrors.NewForbiddenError("you can only sell skins you own")
+	}
+
+	if skinToSell.Available {
+		s.logger.Warn("skin is already listed for sale",
+			"user_id", userID,
+			"skin_id", skinID,
+			"current_price", skinToSell.Price)
+		return apperrors.NewValidationError("skin is already listed for sale")
+	}
+
+	s.logger.Info("skin ownership verified",
+		"user_id", userID,
+		"skin_id", skinID,
+		"current_price", skinToSell.Price,
+		"new_price", price)
+
+	if err := s.skinRepo.UpdatePrice(ctx, tx, skinID, price); err != nil {
+		s.logger.Error("failed to update skin price", "error", err, "skin_id", skinID)
+		return apperrors.WrapInternal(err, "failed to update skin price")
+	}
+
+	if err := s.skinRepo.UpdateAvailability(ctx, tx, skinID, true); err != nil {
+		s.logger.Error("failed to update skin availability", "error", err, "skin_id", skinID)
+		return apperrors.WrapInternal(err, "failed to update skin availability")
+	}
+
+	if err := tx.Commit(); err != nil {
+		s.logger.Error("failed to commit transaction", "error", err, "skin_id", skinID)
+		return apperrors.WrapInternal(err, "failed to commit transaction")
+	}
+
+	s.logger.Info("skin listed for sale successfully",
+		"user_id", userID,
+		"skin_id", skinID,
+		"price", price)
+
+	return nil
 }

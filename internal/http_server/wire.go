@@ -25,7 +25,7 @@ func (s *Server) initDependencies() error {
 	s.authService = auth.NewService(s.cfg.JWTKey)
 	userService := services.NewUser(userRepo, s.authService, s.logger)
 	skinService := services.NewSkin(skinRepo, s.logger)
-	marketplaceService := services.NewMarketplaceService(skinRepo, ordRepo, userRepo, s.asynqClient, s.db, s.logger)
+	marketplaceService := services.NewMarketplaceService(skinRepo, ordRepo, userRepo, transactionRepo, s.asynqClient, s.db, s.logger)
 	transactionService := services.NewTransactionService(transactionRepo, userRepo, s.db, s.logger)
 
 	// Initialize handlers
