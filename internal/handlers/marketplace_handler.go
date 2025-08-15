@@ -9,8 +9,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// TODO: add swagger docs to RemoveSkinFromListing
-
 type MarketplaceHandler struct {
 	svc *services.MarketplaceService
 }
@@ -66,12 +64,22 @@ func (h *MarketplaceHandler) Purchase(c *gin.Context) {
 	c.JSON(http.StatusCreated, order)
 }
 
+// RemoveFromListing godoc
+// @Summary Remove a skin
+// @Description Remove a user's skin from listing
+// @Tags marketplace
+// @Produce json
+// @Param skin_id query string true "Skin ID to remove from listing"
+// @Success 200 {string} string "Skin ID removed successfully"
+// @Failure 400 {object} ErrorResponse "Invalid request"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 404 {object} ErrorResponse "Skin not available"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /marketplace/skins/remove [get]
 func (h *MarketplaceHandler) RemoveFromListing(c *gin.Context) {
-	var req marketplaceRequest
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		HandleError(c, err)
-		return
+	querySkinID := c.Query("skin_id")
+	if querySkinID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "skin_id is required"})
 	}
 
 	userID, ok := middleware.GetUserID(c)
@@ -80,7 +88,7 @@ func (h *MarketplaceHandler) RemoveFromListing(c *gin.Context) {
 		return
 	}
 
-	skinID, err := uuid.Parse(req.SkinID)
+	skinID, err := uuid.Parse(querySkinID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid skinId"})
 	}

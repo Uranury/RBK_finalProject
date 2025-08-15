@@ -84,7 +84,7 @@ func (s *TransactionService) Withdraw(ctx context.Context, userID uuid.UUID, amo
 		CreatedAt:     now,
 	}
 
-	if err := s.transactionRepo.Create(ctx, tx, trnsc); err != nil {
+	if err := s.transactionRepo.Create(ctx, trnsc); err != nil {
 		s.logger.Error("failed to create transaction record", "error", err, "user_id", userID)
 		return nil, apperrors.NewInternalError("Failed to process withdrawal", err)
 	}
@@ -155,7 +155,7 @@ func (s *TransactionService) Deposit(ctx context.Context, userID uuid.UUID, amou
 		CreatedAt:     now,
 	}
 
-	if err := s.transactionRepo.Create(ctx, tx, trnsc); err != nil {
+	if err := s.transactionRepo.Create(ctx, trnsc); err != nil {
 		s.logger.Error("failed to create transaction record", "error", err, "user_id", userID)
 		return nil, apperrors.NewInternalError("Failed to process deposit", err)
 	}

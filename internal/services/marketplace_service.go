@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/Uranury/RBK_finalProject/internal/repositories/transaction"
 	"log/slog"
 	"time"
 
@@ -20,21 +21,23 @@ import (
 // TODO: Add asynq background workers later
 
 type MarketplaceService struct {
-	skinRepo   skin.Repository
-	orderRepo  order.Repository
-	userRepo   user.Repository
-	emailQueue *asynq.Client
-	db         *sqlx.DB
-	logger     *slog.Logger
+	skinRepo        skin.Repository
+	orderRepo       order.Repository
+	userRepo        user.Repository
+	transactionRepo transaction.Repository
+	emailQueue      *asynq.Client
+	db              *sqlx.DB
+	logger          *slog.Logger
 }
 
 func NewMarketplaceService(skinRepo skin.Repository,
 	orderRepo order.Repository,
 	userRepo user.Repository,
+	transactionRepo transaction.Repository,
 	emailQueue *asynq.Client,
 	db *sqlx.DB,
 	logger *slog.Logger) *MarketplaceService {
-	return &MarketplaceService{skinRepo, orderRepo, userRepo, emailQueue, db, logger}
+	return &MarketplaceService{skinRepo, orderRepo, userRepo, transactionRepo, emailQueue, db, logger}
 }
 
 func (s *MarketplaceService) PurchaseSkin(ctx context.Context, userID uuid.UUID, skinID uuid.UUID) (*models.Order, error) {
@@ -90,14 +93,19 @@ func (s *MarketplaceService) PurchaseSkin(ctx context.Context, userID uuid.UUID,
 		return nil, apperrors.NewValidationError("insufficient funds")
 	}
 
+	// Capture original buyer balance before any changes
+	originalBuyerBalance := buyer.Balance
+
 	// Step 3: If skin has an owner, get and lock the owner for balance update
 	var owner *models.User
+	var originalOwnerBalance float64
 	if skinToPurchase.OwnerID != nil {
 		owner, err = s.userRepo.GetUserByIdForUpdate(ctx, tx, *skinToPurchase.OwnerID)
 		if err != nil {
 			s.logger.Error("failed to get owner for update", "error", err, "owner_id", *skinToPurchase.OwnerID)
 			return nil, apperrors.WrapInternal(err, "failed to get owner for update")
 		}
+		originalOwnerBalance = owner.Balance
 		s.logger.Info("skin owner locked for payment", "owner_id", owner.ID, "current_balance", owner.Balance)
 	}
 
@@ -140,8 +148,9 @@ func (s *MarketplaceService) PurchaseSkin(ctx context.Context, userID uuid.UUID,
 	s.logger.Info("buyer balance updated", "user_id", userID, "old_balance", buyer.Balance, "new_balance", newBuyerBalance)
 
 	// Step 7: If skin has an owner, credit them with the sale amount
+	var newOwnerBalance float64
 	if owner != nil {
-		newOwnerBalance := owner.Balance + skinToPurchase.Price
+		newOwnerBalance = owner.Balance + skinToPurchase.Price
 		if err := s.userRepo.UpdateBalance(ctx, tx, owner.ID, newOwnerBalance); err != nil {
 			s.logger.Error("failed to update owner balance", "error", err, "owner_id", owner.ID)
 			return nil, apperrors.WrapInternal(err, "failed to update owner balance")
@@ -182,6 +191,77 @@ func (s *MarketplaceService) PurchaseSkin(ctx context.Context, userID uuid.UUID,
 		"amount", skinToPurchase.Price,
 		"owner_credited", owner != nil)
 
+	// === TRANSACTION AUDIT LOGGING (AFTER SUCCESSFUL COMMIT) ===
+	transactionTime := time.Now()
+
+	// Create buyer transaction record (debit)
+	buyerTransaction := &models.Transaction{
+		ID:             uuid.New(),
+		UserID:         userID,
+		Amount:         -skinToPurchase.Price, // negative for debit
+		Type:           models.Purchase,
+		BalanceBefore:  originalBuyerBalance,
+		BalanceAfter:   newBuyerBalance,
+		SkinID:         &skinID,
+		OrderID:        &ord.ID,
+		CounterpartyID: nil, // will be set below if owner exists
+		CreatedAt:      transactionTime,
+	}
+
+	// Set counterparty if owner exists
+	if owner != nil {
+		buyerTransaction.CounterpartyID = &owner.ID
+	}
+
+	// Log buyer transaction (non-blocking, fire-and-forget)
+	go func() {
+		if err := s.transactionRepo.Create(context.Background(), buyerTransaction); err != nil {
+			s.logger.Error("failed to create buyer transaction record",
+				"error", err,
+				"transaction_id", buyerTransaction.ID,
+				"order_id", ord.ID,
+				"user_id", userID)
+
+			// Could add retry logic here or send to a dead letter queue
+		} else {
+			s.logger.Info("buyer transaction record created successfully",
+				"transaction_id", buyerTransaction.ID,
+				"order_id", ord.ID,
+				"user_id", userID)
+		}
+	}()
+
+	// Create seller transaction record (credit) if owner exists
+	if owner != nil {
+		sellerTransaction := &models.Transaction{
+			ID:             uuid.New(),
+			UserID:         owner.ID,
+			Amount:         skinToPurchase.Price, // positive for credit
+			Type:           models.Sale,
+			BalanceBefore:  originalOwnerBalance,
+			BalanceAfter:   newOwnerBalance,
+			SkinID:         &skinID,
+			OrderID:        &ord.ID,
+			CounterpartyID: &userID,
+			CreatedAt:      transactionTime,
+		}
+
+		// Log seller transaction (non-blocking, fire-and-forget)
+		go func() {
+			if err := s.transactionRepo.Create(context.Background(), sellerTransaction); err != nil {
+				s.logger.Error("failed to create seller transaction record",
+					"error", err,
+					"transaction_id", sellerTransaction.ID,
+					"order_id", ord.ID,
+					"seller_id", owner.ID)
+			} else {
+				s.logger.Info("seller transaction record created successfully",
+					"transaction_id", sellerTransaction.ID,
+					"order_id", ord.ID,
+					"seller_id", owner.ID)
+			}
+		}()
+	}
 	return ord, nil
 }
 

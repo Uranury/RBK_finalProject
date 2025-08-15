@@ -18,12 +18,15 @@ func NewRepository(db *sqlx.DB) Repository {
 	return &repository{db: db}
 }
 
-func (r *repository) Create(ctx context.Context, tx *sqlx.Tx, transaction *models.Transaction) error {
-	_, err := tx.ExecContext(ctx,
-		`INSERT INTO transaction_history (id, user_id, amount, type, balance_before, balance_after, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+func (r *repository) Create(ctx context.Context, transaction *models.Transaction) error {
+	_, err := r.db.ExecContext(ctx,
+		`INSERT INTO transaction_history (id, user_id, amount, type, balance_before, balance_after, skin_id, 
+                                 order_id, counterparty_id, description, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
 		transaction.ID, transaction.UserID, transaction.Amount, transaction.Type,
-		transaction.BalanceBefore, transaction.BalanceAfter, transaction.CreatedAt)
+		transaction.BalanceBefore, transaction.BalanceAfter, transaction.SkinID,
+		transaction.OrderID, transaction.CounterpartyID, transaction.Description,
+		transaction.CreatedAt)
 	return err
 }
 

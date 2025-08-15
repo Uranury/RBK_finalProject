@@ -9,7 +9,6 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-// TODO: Add query params for RemoveFromListing endpoint instead of JSON
 // TODO: Consider doing the same for Purchase endpoint
 
 func (s *Server) setupRoutes() {
@@ -32,7 +31,7 @@ func (s *Server) setupRoutes() {
 	protected.GET("/marketplace/skins/mine", s.marketplaceHandler.ListMine)
 	protected.GET("/marketplace/orders/:order_id", s.marketplaceHandler.GetOrder)
 	protected.POST("/marketplace/purchase", s.marketplaceHandler.Purchase)
-	protected.DELETE("/marketplace/skins", s.marketplaceHandler.RemoveFromListing)
+	protected.DELETE("/marketplace/skins/:skin_id", s.marketplaceHandler.RemoveFromListing)
 	// Skin creation (protected)
 	protected.POST("/skins", s.skinHandler.Create)
 	// Transactions
