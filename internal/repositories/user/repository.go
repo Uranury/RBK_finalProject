@@ -66,6 +66,18 @@ func (r *repository) GetBalance(ctx context.Context, userID uuid.UUID) (float64,
 	return balance, nil
 }
 
+func (r *repository) GetUserProfile(ctx context.Context, userID uuid.UUID) (*models.UserProfile, error) {
+	var user models.UserProfile
+	err := r.db.GetContext(ctx, &user, "SELECT name, email, balance FROM users WHERE id = $1", userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
 func (r *repository) UpdateBalance(ctx context.Context, tx *sqlx.Tx, userID uuid.UUID, newBalance float64) error {
 	_, err := tx.ExecContext(ctx, "UPDATE users SET balance = $1, updated_at = NOW() WHERE id = $2", newBalance, userID)
 	return err
@@ -94,7 +106,6 @@ func (r *repository) GetUserByIdForUpdate(ctx context.Context, tx *sqlx.Tx, user
         WHERE id = $1 
         FOR UPDATE
     `
-	// Use tx.QueryRowxContext so we stay inside the transaction
 	if err := tx.GetContext(ctx, &user, query, userID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil

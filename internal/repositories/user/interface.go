@@ -12,6 +12,7 @@ type Repository interface {
 	FindByEmail(ctx context.Context, email string) (*models.User, error)
 	FindByID(ctx context.Context, userID uuid.UUID) (*models.User, error)
 	GetBalance(ctx context.Context, userID uuid.UUID) (float64, error)
+	GetUserProfile(ctx context.Context, userID uuid.UUID) (*models.UserProfile, error)
 	UpdateBalance(ctx context.Context, tx *sqlx.Tx, userID uuid.UUID, newBalance float64) error
 	Create(ctx context.Context, user *models.User) error
 	Delete(ctx context.Context, userID uuid.UUID) error

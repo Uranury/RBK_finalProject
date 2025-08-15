@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/Uranury/RBK_finalProject/internal/middleware"
 	"net/http"
 
 	"github.com/Uranury/RBK_finalProject/internal/models"
@@ -32,7 +33,7 @@ func NewUserHandler(svc *services.User) *UserHandler {
 func (h *UserHandler) Signup(c *gin.Context) {
 	var req models.UserSignupRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		HandleError(c, apperrors.NewValidationError(err.Error()))
+		HandleError(c, err)
 		return
 	}
 
@@ -76,4 +77,30 @@ func (h *UserHandler) Login(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"token": token})
+}
+
+// Profile godoc
+// @Summary Get user profile
+// @Description Retrieve the authenticated user's profile information (name, email, balance)
+// @Tags users
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} models.UserProfile "User profile data"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 404 {object} ErrorResponse "User not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /profile [get]
+func (h *UserHandler) Profile(c *gin.Context) {
+	userID, ok := middleware.GetUserID(c)
+	if !ok {
+		HandleError(c, apperrors.ErrUnauthorized)
+		return
+	}
+	userProfile, err := h.svc.GetUserProfile(c.Request.Context(), userID)
+	if err != nil {
+		HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, userProfile)
 }

@@ -54,7 +54,7 @@ func (r *repository) GetUserSkins(ctx context.Context, userID uuid.UUID) ([]*mod
 func (r *repository) GetAvailableSkins(ctx context.Context) ([]*models.Skin, error) {
 	var skins []*models.Skin
 	err := r.db.SelectContext(ctx, &skins,
-		"SELECT * FROM skins WHERE available = true AND owner_id IS NULL ORDER BY created_at DESC")
+		"SELECT * FROM skins WHERE available = true ORDER BY created_at DESC")
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return []*models.Skin{}, nil // Return empty slice, not nil
@@ -64,16 +64,28 @@ func (r *repository) GetAvailableSkins(ctx context.Context) ([]*models.Skin, err
 	return skins, nil
 }
 
-// GetSkinsForUpdate You'll need these methods for the marketplace transaction:
 func (r *repository) GetSkinsForUpdate(ctx context.Context, tx *sqlx.Tx, skinIDs []uuid.UUID) ([]*models.Skin, error) {
 	query, args, err := sqlx.In(
-		"SELECT * FROM skins WHERE id IN (?) AND available = true AND owner_id IS NULL FOR UPDATE",
+		"SELECT * FROM skins WHERE id IN (?) AND available = true FOR UPDATE",
 		skinIDs)
 	if err != nil {
 		return nil, err
 	}
 	query = r.db.Rebind(query)
 
+	var skins []*models.Skin
+	err = tx.SelectContext(ctx, &skins, query, args...)
+	return skins, err
+}
+
+func (r *repository) GetSkinsForSellUpdate(ctx context.Context, tx *sqlx.Tx, skinIDs []uuid.UUID) ([]*models.Skin, error) {
+	query, args, err := sqlx.In(
+		"SELECT * FROM skins WHERE id IN (?) FOR UPDATE",
+		skinIDs)
+	if err != nil {
+		return nil, err
+	}
+	query = r.db.Rebind(query)
 	var skins []*models.Skin
 	err = tx.SelectContext(ctx, &skins, query, args...)
 	return skins, err

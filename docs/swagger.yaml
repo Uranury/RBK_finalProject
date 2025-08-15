@@ -40,6 +40,17 @@ definitions:
     required:
     - skin_id
     type: object
+  handlers.sellRequest:
+    properties:
+      price:
+        maximum: 1000000
+        type: number
+      skin_id:
+        type: string
+    required:
+    - price
+    - skin_id
+    type: object
   models.DepositRequest:
     properties:
       amount:
@@ -199,9 +210,17 @@ definitions:
         type: number
       balance_before:
         type: number
+      counterparty_id:
+        type: string
       created_at:
         type: string
+      description:
+        type: string
       id:
+        type: string
+      order_id:
+        type: string
+      skin_id:
         type: string
       type:
         $ref: '#/definitions/models.TransactionType'
@@ -212,10 +231,14 @@ definitions:
     enum:
     - withdraw
     - deposit
+    - purchase
+    - sale
     type: string
     x-enum-varnames:
     - Withdraw
     - Deposit
+    - Purchase
+    - Sale
   models.UserLoginRequest:
     properties:
       email:
@@ -225,6 +248,15 @@ definitions:
     required:
     - email
     - password
+    type: object
+  models.UserProfile:
+    properties:
+      balance:
+        type: number
+      email:
+        type: string
+      name:
+        type: string
     type: object
   models.UserSignupRequest:
     properties:
@@ -415,6 +447,51 @@ paths:
       summary: Purchase a skin
       tags:
       - marketplace
+  /marketplace/sell:
+    post:
+      consumes:
+      - application/json
+      description: Sell a skin that you own. Price must be > 0 and <= 1,000,000.
+      parameters:
+      - description: Sell request
+        in: body
+        name: sell
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.sellRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: UUID of listed skin
+          schema:
+            type: string
+        "400":
+          description: Invalid request (e.g., invalid skinID, invalid price, skin
+            already listed)
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: 'Forbidden: skin ownership required'
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Skin not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Sell a skin
+      tags:
+      - marketplace
   /marketplace/skins:
     get:
       description: Get all skins available for purchase in the marketplace
@@ -435,8 +512,6 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
-      security:
-      - BearerAuth: []
       summary: List available skins
       tags:
       - marketplace
@@ -465,6 +540,69 @@ paths:
       summary: List user's skins
       tags:
       - marketplace
+  /marketplace/skins/remove:
+    get:
+      description: Remove a user's skin from listing
+      parameters:
+      - description: Skin ID to remove from listing
+        in: query
+        name: skin_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Skin ID removed successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Skin not available
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Remove a skin
+      tags:
+      - marketplace
+  /profile:
+    get:
+      description: Retrieve the authenticated user's profile information (name, email,
+        balance)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User profile data
+          schema:
+            $ref: '#/definitions/models.UserProfile'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user profile
+      tags:
+      - users
   /signup:
     post:
       consumes:

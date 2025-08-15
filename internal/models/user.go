@@ -18,7 +18,10 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
-type UserInventory struct {
+type UserProfile struct {
+	Name    string  `json:"name" db:"name"`
+	Email   string  `json:"email" db:"email"`
+	Balance float64 `json:"balance" db:"balance"`
 }
 
 type UserSignupRequest struct {

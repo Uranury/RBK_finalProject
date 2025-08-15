@@ -91,18 +91,18 @@ func (s *User) LoginUser(ctx context.Context, email, password string) (string, e
 	return token, nil
 }
 
-func (s *User) GetUserProfile(ctx context.Context, id uuid.UUID) (*models.User, error) {
+func (s *User) GetUserProfile(ctx context.Context, id uuid.UUID) (*models.UserProfile, error) {
 	s.logger.Info("fetching user profile", "user_id", id)
 
-	// Uncomment & implement actual fetching logic
-	//existingUser, err := s.repo.FindByID(ctx, id)
-	//if err != nil {
-	//	s.logger.Error("failed to find user", "user_id", id, "error", err)
-	//	return nil, apperrors.WrapInternal(err, "failed to find user")
-	//}
-	//if existingUser == nil {
-	//	s.logger.Warn("user not found", "user_id", id)
-	//	return nil, apperrors.ErrUserNotFound
-	//}
-	return nil, nil
+	usr, err := s.repo.GetUserProfile(ctx, id)
+	if err != nil {
+		s.logger.Error("failed to fetch user profile", "user_id", id, "error", err)
+		return nil, apperrors.WrapInternal(err, "failed to fetch user profile")
+	}
+	if usr == nil {
+		s.logger.Info("user profile not found", "user_id", id)
+		return nil, apperrors.ErrUserNotFound
+	}
+
+	return usr, nil
 }

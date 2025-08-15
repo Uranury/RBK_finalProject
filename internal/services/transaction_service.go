@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"log/slog"
 	"time"
 
@@ -44,7 +46,7 @@ func (s *TransactionService) Withdraw(ctx context.Context, userID uuid.UUID, amo
 		return nil, apperrors.NewInternalError("Failed to process withdrawal", err)
 	}
 	defer func(tx *sqlx.Tx) {
-		if err := tx.Rollback(); err != nil {
+		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
 			s.logger.Error("failed to rollback transaction", "error", err)
 		}
 	}(tx)
@@ -84,7 +86,7 @@ func (s *TransactionService) Withdraw(ctx context.Context, userID uuid.UUID, amo
 		CreatedAt:     now,
 	}
 
-	if err := s.transactionRepo.Create(ctx, trnsc); err != nil {
+	if err := s.transactionRepo.Create(ctx, tx, trnsc); err != nil {
 		s.logger.Error("failed to create transaction record", "error", err, "user_id", userID)
 		return nil, apperrors.NewInternalError("Failed to process withdrawal", err)
 	}
@@ -119,7 +121,7 @@ func (s *TransactionService) Deposit(ctx context.Context, userID uuid.UUID, amou
 		return nil, apperrors.NewInternalError("Failed to process deposit", err)
 	}
 	defer func(tx *sqlx.Tx) {
-		if err := tx.Rollback(); err != nil {
+		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
 			s.logger.Error("failed to rollback transaction", "error", err)
 		}
 	}(tx)
@@ -155,9 +157,8 @@ func (s *TransactionService) Deposit(ctx context.Context, userID uuid.UUID, amou
 		CreatedAt:     now,
 	}
 
-	if err := s.transactionRepo.Create(ctx, trnsc); err != nil {
-		s.logger.Error("failed to create transaction record", "error", err, "user_id", userID)
-		return nil, apperrors.NewInternalError("Failed to process deposit", err)
+	if err := s.transactionRepo.Create(ctx, tx, trnsc); err != nil {
+		s.logger.Warn("failed to create transaction record", "error", err, "user_id", userID)
 	}
 
 	// Commit transaction

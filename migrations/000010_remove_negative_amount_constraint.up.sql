@@ -1,0 +1,1 @@
+ALTER TABLE transaction_history DROP CONSTRAINT transaction_history_amount_check;

@@ -242,13 +242,77 @@ const docTemplate = `{
                 }
             }
         },
-        "/marketplace/skins": {
-            "get": {
+        "/marketplace/sell": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
+                "description": "Sell a skin that you own. Price must be \u003e 0 and \u003c= 1,000,000.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "marketplace"
+                ],
+                "summary": "Sell a skin",
+                "parameters": [
+                    {
+                        "description": "Sell request",
+                        "name": "sell",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.sellRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "UUID of listed skin",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request (e.g., invalid skinID, invalid price, skin already listed)",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden: skin ownership required",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Skin not found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/marketplace/skins": {
+            "get": {
                 "description": "Get all skins available for purchase in the marketplace",
                 "produces": [
                     "application/json"
@@ -309,6 +373,102 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/marketplace/skins/remove": {
+            "get": {
+                "description": "Remove a user's skin from listing",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "marketplace"
+                ],
+                "summary": "Remove a skin",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Skin ID to remove from listing",
+                        "name": "skin_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Skin ID removed successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Skin not available",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/profile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve the authenticated user's profile information (name, email, balance)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get user profile",
+                "responses": {
+                    "200": {
+                        "description": "User profile data",
+                        "schema": {
+                            "$ref": "#/definitions/models.UserProfile"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -678,6 +838,22 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.sellRequest": {
+            "type": "object",
+            "required": [
+                "price",
+                "skin_id"
+            ],
+            "properties": {
+                "price": {
+                    "type": "number",
+                    "maximum": 1000000
+                },
+                "skin_id": {
+                    "type": "string"
+                }
+            }
+        },
         "models.DepositRequest": {
             "type": "object",
             "required": [
@@ -874,10 +1050,22 @@ const docTemplate = `{
                 "balance_before": {
                     "type": "number"
                 },
+                "counterparty_id": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
+                "description": {
+                    "type": "string"
+                },
                 "id": {
+                    "type": "string"
+                },
+                "order_id": {
+                    "type": "string"
+                },
+                "skin_id": {
                     "type": "string"
                 },
                 "type": {
@@ -892,11 +1080,15 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "withdraw",
-                "deposit"
+                "deposit",
+                "purchase",
+                "sale"
             ],
             "x-enum-varnames": [
                 "Withdraw",
-                "Deposit"
+                "Deposit",
+                "Purchase",
+                "Sale"
             ]
         },
         "models.UserLoginRequest": {
@@ -910,6 +1102,20 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.UserProfile": {
+            "type": "object",
+            "properties": {
+                "balance": {
+                    "type": "number"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 }
             }

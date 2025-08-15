@@ -112,4 +112,5 @@ var (
 	ErrUserNotFound       = NewNotFoundError("user not found")
 	ErrUserExists         = NewAlreadyExistsError("user already exists")
 	ErrInvalidCredentials = NewUnauthorizedError("invalid credentials")
+	ErrUnauthorized       = NewUnauthorizedError("user unauthorized")
 )

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/Uranury/RBK_finalProject/pkg/apperrors"
 	"net/http"
 
 	"github.com/Uranury/RBK_finalProject/internal/middleware"
@@ -45,13 +46,13 @@ func (h *MarketplaceHandler) Purchase(c *gin.Context) {
 
 	userID, ok := middleware.GetUserID(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		HandleError(c, apperrors.ErrUnauthorized)
 		return
 	}
 
 	skinID, err := uuid.Parse(req.SkinID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid skinId"})
+		HandleError(c, apperrors.NewValidationError("invalid skin_id"))
 		return
 	}
 
@@ -76,7 +77,7 @@ type sellRequest struct {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param purchase body sellRequest true "Sell request"
+// @Param sell body sellRequest true "Sell request"
 // @Success 201 {string} string "UUID of listed skin"
 // @Failure 400 {object} ErrorResponse "Invalid request (e.g., invalid skinID, invalid price, skin already listed)"
 // @Failure 401 {object} ErrorResponse "Unauthorized"
@@ -93,13 +94,13 @@ func (h *MarketplaceHandler) Sell(c *gin.Context) {
 
 	userID, ok := middleware.GetUserID(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		HandleError(c, apperrors.ErrUnauthorized)
 		return
 	}
 
 	skinID, err := uuid.Parse(req.SkinID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid skinId"})
+		HandleError(c, apperrors.NewValidationError("invalid skin_id"))
 		return
 	}
 
@@ -107,7 +108,7 @@ func (h *MarketplaceHandler) Sell(c *gin.Context) {
 		HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, skinID)
+	c.JSON(http.StatusCreated, skinID.String())
 }
 
 // RemoveFromListing godoc
@@ -125,18 +126,19 @@ func (h *MarketplaceHandler) Sell(c *gin.Context) {
 func (h *MarketplaceHandler) RemoveFromListing(c *gin.Context) {
 	querySkinID := c.Query("skin_id")
 	if querySkinID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "skin_id is required"})
+		HandleError(c, apperrors.NewValidationError("skin_id required"))
 	}
 
 	userID, ok := middleware.GetUserID(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		HandleError(c, apperrors.ErrUnauthorized)
 		return
 	}
 
 	skinID, err := uuid.Parse(querySkinID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid skinId"})
+		HandleError(c, apperrors.NewValidationError("invalid skin_id"))
+		return
 	}
 
 	err = h.svc.RemoveSkinFromListing(c.Request.Context(), userID, skinID)
@@ -153,7 +155,6 @@ func (h *MarketplaceHandler) RemoveFromListing(c *gin.Context) {
 // @Description Get all skins available for purchase in the marketplace
 // @Tags marketplace
 // @Produce json
-// @Security BearerAuth
 // @Success 200 {array} models.Skin "List of available skins"
 // @Failure 401 {object} ErrorResponse "Unauthorized"
 // @Failure 500 {object} ErrorResponse "Internal server error"
@@ -180,7 +181,7 @@ func (h *MarketplaceHandler) ListAvailable(c *gin.Context) {
 func (h *MarketplaceHandler) ListMine(c *gin.Context) {
 	userID, ok := middleware.GetUserID(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		HandleError(c, apperrors.ErrUnauthorized)
 		return
 	}
 	skins, err := h.svc.ListUserSkins(c.Request.Context(), userID)
@@ -208,14 +209,14 @@ func (h *MarketplaceHandler) ListMine(c *gin.Context) {
 func (h *MarketplaceHandler) GetOrder(c *gin.Context) {
 	userID, ok := middleware.GetUserID(c)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		HandleError(c, apperrors.ErrUnauthorized)
 		return
 	}
 
 	orderIDStr := c.Param("order_id")
 	orderID, err := uuid.Parse(orderIDStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid order id"})
+		HandleError(c, apperrors.NewValidationError("invalid order_id"))
 		return
 	}
 
@@ -225,7 +226,7 @@ func (h *MarketplaceHandler) GetOrder(c *gin.Context) {
 		return
 	}
 	if ord.UserID != userID {
-		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		HandleError(c, apperrors.NewForbiddenError("you are not authorized to access this order"))
 		return
 	}
 	c.JSON(http.StatusOK, ord)
