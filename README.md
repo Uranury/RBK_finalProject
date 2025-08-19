@@ -1,21 +1,32 @@
 # CS:GO Skin Marketplace API 🎮
 
+[![Go Version](https://img.shields.io/badge/Go-1.23.1+-blue.svg)](https://golang.org)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://docker.com)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://postgresql.org)
+[![Redis](https://img.shields.io/badge/Redis-7-red.svg)](https://redis.io)
+
+[![GitHub](https://img.shields.io/badge/GitHub-Profile-black?style=for-the-badge&logo=github)](https://github.com/yourusername)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=for-the-badge&logo=linkedin)](https://linkedin.com/in/yourusername)
+
 A comprehensive marketplace API for buying and selling CS:GO skins, built with Go, featuring user authentication, transaction management, automated invoice generation, and email notifications.
 
-## 🎯 Project Overview
+## 🎯 Quick Start
 
-This project is a full-featured marketplace API that simulates the CS:GO skin trading ecosystem. Users can register, deposit/withdraw funds, list skins for sale, purchase skins from other users, and receive automated invoice emails for their transactions.
+```bash
+# Clone and setup
+git clone <repository-url>
+cd finalProject
 
-### Key Features
+# Minimal setup (only 2 required variables!)
+cp env.example .env
+echo "JWT_SECRET=your-secret-key-here" >> .env
+echo "MIGRATIONS_PATH=./migrations" >> .env
 
-- **User Management**: Registration, authentication, profile management
-- **Skin Marketplace**: Create, list, buy, and sell CS:GO skins
-- **Transaction System**: Deposit, withdraw, and track transaction history
-- **Automated Invoicing**: PDF generation and email delivery for purchases
-- **Background Processing**: Asynchronous task processing with Redis
-- **RESTful API**: Complete API with Swagger documentation
-- **Database Migrations**: Automated schema management
-- **Docker Support**: Containerized deployment with optimized images
+# Run with Docker
+docker-compose up --build
+```
+
+**Access:** http://localhost:8080 | **API Docs:** http://localhost:8080/swagger/index.html
 
 ## 🏗️ Architecture
 
@@ -24,7 +35,6 @@ This project is a full-featured marketplace API that simulates the CS:GO skin tr
 │   API Server    │    │   Worker        │    │   Database      │
 │   (Gin)         │    │   (Asynq)       │    │   (PostgreSQL)  │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
          │                       │                       │
          ▼                       ▼                       ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -35,355 +45,172 @@ This project is a full-featured marketplace API that simulates the CS:GO skin tr
 
 ## 🛠️ Tech Stack
 
-### Backend
-- **Language**: Go 1.23.1
-- **Framework**: Gin (HTTP server)
-- **Database**: PostgreSQL 16
-- **Cache/Queue**: Redis 7
-- **ORM**: SQLx
-- **Authentication**: JWT
-- **Background Jobs**: Asynq
-- **Email Service**: Mailgun
-- **PDF Generation**: gofpdf
-- **API Documentation**: Swagger/OpenAPI
-
-### DevOps & Tools
-- **Containerization**: Docker & Docker Compose
-- **Database Migrations**: golang-migrate
-- **Configuration**: Environment variables
-- **Logging**: Structured logging with slog
-- **Testing**: Go testing with testify
-- **Dependency Injection**: Wire
-
-### Libraries & Dependencies
-- `github.com/gin-gonic/gin` - HTTP web framework
-- `github.com/jmoiron/sqlx` - Database operations
-- `github.com/redis/go-redis/v9` - Redis client
-- `github.com/hibiken/asynq` - Background job processing
-- `github.com/mailgun/mailgun-go/v4` - Email service
-- `github.com/jung-kurt/gofpdf` - PDF generation
-- `github.com/golang-jwt/jwt/v4` - JWT authentication
-- `github.com/google/uuid` - UUID generation
-- `github.com/swaggo/gin-swagger` - API documentation
-- `golang.org/x/crypto/bcrypt` - Password hashing
+| Category | Technology |
+|----------|------------|
+| **Language** | Go 1.23.1 |
+| **Framework** | Gin (HTTP server) |
+| **Database** | PostgreSQL 16 |
+| **Cache/Queue** | Redis 7 |
+| **ORM** | SQLx |
+| **Auth** | JWT |
+| **Background Jobs** | Asynq |
+| **Email** | Mailgun |
+| **PDF** | gofpdf |
+| **Docs** | Swagger/OpenAPI |
+| **Containerization** | Docker & Docker Compose |
 
 ## 📁 Project Structure
 
 ```
 finalProject/
-├── cmd/                          # Application entry points
-│   ├── api/                      # API server
-│   │   ├── main.go              # API server entry point
-│   │   └── wire.go              # Dependency injection
-│   └── worker/                   # Background worker
-│       ├── main.go              # Worker entry point
-│       └── wire.go              # Worker dependencies
-├── internal/                     # Internal application code
-│   ├── auth/                    # Authentication service
-│   ├── handlers/                # HTTP request handlers
-│   ├── http_server/             # HTTP server setup
-│   ├── middleware/              # HTTP middleware
-│   ├── models/                  # Data models
-│   ├── queue/                   # Background job processing
-│   │   ├── handlers/            # Job handlers
-│   │   └── jobs/                # Job definitions
-│   ├── repositories/            # Data access layer
-│   │   ├── order/               # Order repository
-│   │   ├── skin/                # Skin repository
-│   │   ├── transaction/         # Transaction repository
-│   │   └── user/                # User repository
-│   └── services/                # Business logic layer
-│       ├── email_service.go     # Email service
-│       ├── invoice_service.go   # PDF generation
-│       ├── marketplace_service.go # Marketplace logic
-│       ├── skin_service.go      # Skin management
-│       ├── transaction_service.go # Transaction logic
-│       └── user_service.go      # User management
-├── pkg/                         # Shared packages
-│   ├── apperrors/               # Error handling
-│   ├── config/                  # Configuration management
-│   └── db/                      # Database connection
-├── migrations/                  # Database migrations
-├── docs/                        # Swagger documentation
-├── Dockerfile*                  # Docker configurations
-├── docker-compose.yml           # Service orchestration
-├── go.mod                       # Go module definition
-└── README.md                    # This file
+├── cmd/                    # Application entry points
+│   ├── api/               # API server
+│   └── worker/            # Background worker
+├── internal/              # Application code
+│   ├── auth/              # Authentication
+│   ├── handlers/          # HTTP handlers
+│   ├── models/            # Data models
+│   ├── repositories/      # Data access layer
+│   ├── services/          # Business logic
+│   └── queue/             # Background jobs
+├── pkg/                   # Shared packages
+├── migrations/            # Database migrations
+├── docs/                  # Swagger documentation
+└── Dockerfile*            # Container configs
 ```
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Docker & Docker Compose
-- Go 1.23.1+ (for local development)
-- Make (optional, for build scripts)
-
-### 1. Clone the Repository
-```bash
-git clone <repository-url>
-cd finalProject
-```
-
-### 2. Setup Environment
-```bash
-# Create environment file
-cp .env.example .env
-
-# Edit the environment file
-nano .env
-```
-
-### 3. Build and Run
-```bash
-# Build and start all services
-docker-compose up --build
-
-# Or run in background
-docker-compose up -d --build
-```
-
-### 4. Access the Application
-- **API**: http://localhost:8080
-- **API Documentation**: http://localhost:8080/swagger/index.html
-- **Database**: localhost:5436 (PostgreSQL)
-- **Redis**: localhost:6379
 
 ## ⚙️ Configuration
 
-### Environment Variables
+### Required Environment Variables
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `LISTEN_ADDR` | HTTP server address | `:8080` | No |
-| `REDIS_ADDR` | Redis connection string | `redis:6379` | No |
-| `DB_URL` | PostgreSQL connection string | `postgres://postgres:postgres@db:5432/postgres?sslmode=disable` | No |
-| `MIGRATIONS_PATH` | Path to database migrations | `/app/migrations` | No |
-| `JWT_SECRET` | JWT signing secret | - | **Yes** |
-| `MAILGUN_DOMAIN` | Mailgun domain for emails | - | No |
-| `MAILGUN_API_KEY` | Mailgun API key | - | No |
-| `POSTGRES_DB` | PostgreSQL database name | `postgres` | No |
-| `POSTGRES_USER` | PostgreSQL username | `postgres` | No |
-| `POSTGRES_PASSWORD` | PostgreSQL password | `postgres` | No |
-| `POSTGRES_PORT` | PostgreSQL port | `5432` | No |
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `JWT_SECRET` | JWT signing secret | `your-secret-key-here` |
+| `MIGRATIONS_PATH` | Path to migrations | `./migrations` |
 
-### Example .env File
-```env
-# Application Configuration
-LISTEN_ADDR=:8080
-REDIS_ADDR=redis:6379
+### Optional Variables (with defaults)
 
-# Database Configuration
-DB_URL=postgres://postgres:postgres@db:5432/postgres?sslmode=disable
-MIGRATIONS_PATH=/app/migrations
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LISTEN_ADDR` | `:8080` | HTTP server address |
+| `REDIS_ADDR` | `:6379` | Redis connection |
+| `DB_URL` | `postgres://postgres:postgres@db:5432/postgres?sslmode=disable` | Database URL |
+| `MAILGUN_DOMAIN` | - | Email domain (optional) |
+| `MAILGUN_API_KEY` | - | Email API key (optional) |
 
-# PostgreSQL Configuration
-POSTGRES_DB=postgres
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_PORT=5432
+## 📚 API Endpoints
 
-# JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key-here
-
-# Mailgun Configuration (optional)
-MAILGUN_DOMAIN=your-mailgun-domain.com
-MAILGUN_API_KEY=your-mailgun-api-key
-```
-
-## 📚 API Documentation
-
-The API is fully documented with Swagger/OpenAPI. Once the application is running, visit:
-
-**http://localhost:8080/swagger/index.html**
+**Full Documentation:** http://localhost:8080/swagger/index.html
 
 ### Key Endpoints
 
-#### Authentication
-- `POST /signup` - Register a new user
-- `POST /login` - Authenticate user
-- `GET /profile` - Get user profile (authenticated)
-
-#### Marketplace
-- `GET /marketplace/skins` - List available skins
-- `GET /marketplace/skins/mine` - Get user's skins (authenticated)
-- `POST /marketplace/purchase` - Purchase a skin (authenticated)
-- `POST /marketplace/sell` - List a skin for sale (authenticated)
-- `DELETE /marketplace/skins/{skin_id}` - Remove skin from listing (authenticated)
-
-#### Transactions
-- `POST /transactions/deposit` - Deposit funds (authenticated)
-- `POST /transactions/withdraw` - Withdraw funds (authenticated)
-- `GET /transactions/history` - Get transaction history (authenticated)
-
-#### Skins
-- `POST /skins` - Create a new skin (authenticated)
-- `GET /guns` - Get available guns
-- `GET /wears` - Get available wear levels
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/signup` | Register user |
+| `POST` | `/login` | Authenticate user |
+| `GET` | `/profile` | Get user profile |
+| `GET` | `/marketplace/skins` | List available skins |
+| `POST` | `/marketplace/purchase` | Purchase skin |
+| `POST` | `/marketplace/sell` | List skin for sale |
+| `POST` | `/transactions/deposit` | Deposit funds |
+| `POST` | `/transactions/withdraw` | Withdraw funds |
 
 ## 🧪 Testing
 
-### Run Tests
 ```bash
 # Run all tests
-go test ./...
+make test
 
-# Run tests with coverage
-go test -cover ./...
+# Run with coverage
+make test-coverage
 
-# Run specific test file
+# Run specific service tests
 go test ./internal/services -v
-
 ```
 
-### Test Coverage
-The project includes comprehensive unit tests for:
-- User service (authentication, registration, profile management)
-- Skin service (creation, validation, retrieval)
-- Email service (configuration and structure)
-- Business logic validation
+## 🐳 Docker Commands
 
-### Test Structure
+```bash
+# Build and start
+docker-compose up --build
+
+# Start in background
+docker-compose up -d
+
+# Stop services
+docker-compose down
+
+# View logs
+docker-compose logs -f
 ```
-internal/services/
-├── user_service_test.go      # User service tests
-├── skin_service_test.go      # Skin service tests
-└── email_service_test.go     # Email service tests
-```
-
-## 🐳 Docker Optimization
-
-The project includes optimized Docker images with:
-
-- **Multi-stage builds** for smaller production images
-- **Build caching** for faster rebuilds
-- **Selective file copying** to minimize image size
-- **Security hardening** with non-root users
-- **Alpine-based images** for smaller footprint
-
-### Image Sizes
-- **API Image**: ~20MB (80% reduction from original)
-- **Worker Image**: ~15MB (85% reduction from original)
-- **Database Images**: ~50% reduction with Alpine variants
 
 ## 🔧 Development
 
-### Local Development Setup
 ```bash
-# Install dependencies
-go mod download
+# Setup development environment
+make dev-setup
 
-# Run migrations
+# Run locally (requires PostgreSQL & Redis)
+make run
+
+# Database migrations
 make migrate-up
-
-# Start services
-docker-compose up db redis
-
-# Run API server
-go run cmd/api/main.go
-
-# Run worker
-go run cmd/worker/main.go
-```
-
-### Database Migrations
-```bash
-# Apply migrations
-make migrate-up
-
-# Rollback migrations
 make migrate-down
 
-# Create new migration
-make migrate-create name=migration_name
-```
-
-### Code Generation
-```bash
-
-# Generate Swagger documentation
+# Code generation
+make wire
 make swagger
 ```
 
-## 📊 Performance
+## 🔒 Security Features
 
-### Optimizations Applied
-- **Database Connection Pooling**: Optimized connection settings
-- **Redis Caching**: Background job queue and caching
-- **Asynchronous Processing**: Email sending and PDF generation
-- **Optimized Docker Images**: Multi-stage builds and Alpine base
-- **Structured Logging**: Efficient logging with slog
+- **JWT Authentication** with secure token management
+- **Password Hashing** using bcrypt
+- **Input Validation** and sanitization
+- **SQL Injection Protection** with parameterized queries
+- **Non-root Containers** for security hardening
+- **Environment Variables** for secure configuration
 
-### Monitoring
-- **Health Checks**: Database and Redis health monitoring
-- **Structured Logging**: JSON-formatted logs for easy parsing
-- **Error Tracking**: Comprehensive error handling and logging
+## 📊 Performance Optimizations
 
-## 🔒 Security
+- **Multi-stage Docker builds** (80% image size reduction)
+- **Database connection pooling**
+- **Redis caching** and background job queue
+- **Asynchronous processing** for emails and PDFs
+- **Structured logging** with slog
+- **Alpine-based images** for smaller footprint
 
-### Security Features
-- **JWT Authentication**: Secure token-based authentication
-- **Password Hashing**: bcrypt for password security
-- **Input Validation**: Comprehensive request validation
-- **SQL Injection Protection**: Parameterized queries with SQLx
-- **Non-root Containers**: Docker security hardening
-- **Environment Variables**: Secure configuration management
+## 🆘 Troubleshooting
 
-### Best Practices
-- Input sanitization and validation
-- Proper error handling without information leakage
-- Secure password storage with bcrypt
-- JWT token expiration and validation
-- Database transaction management
+### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| **Email not sending** | Check Mailgun credentials in `.env` |
+| **Database connection** | Verify PostgreSQL is running |
+| **Build issues** | Clear Docker cache: `docker system prune -a` |
+
+### Getting Help
+
+- **API Documentation:** http://localhost:8080/swagger/index.html
+- **Application Logs:** `docker-compose logs`
+- **Worker Logs:** `docker-compose logs worker`
 
 ## 🤝 Contributing
 
-### Development Workflow
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
 4. Add tests for new functionality
-5. Run the test suite
-6. Submit a pull request
-
-### Code Style
-- Follow Go conventions and idioms
-- Use `gofmt` for code formatting
-- Write comprehensive tests
-- Add comments for complex logic
-- Use meaningful variable and function names
+5. Submit a pull request
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🆘 Support
-
-### Common Issues
-
-#### Email Not Sending
-- Check Mailgun credentials in environment variables
-- Verify domain configuration
-- Check worker logs for email processing errors
-
-#### Database Connection Issues
-- Ensure PostgreSQL is running
-- Check database credentials
-- Verify network connectivity between services
-
-### Getting Help
-- Check the API documentation at `/swagger/index.html`
-- Review application logs: `docker-compose logs`
-- Check worker logs: `docker-compose logs worker`
-- Verify environment configuration
-
-### Technical Improvements
-- **GraphQL API**: Alternative to REST endpoints
-- **Microservices**: Split into smaller, focused services
-- **Event Sourcing**: Complete audit trail of all changes
-- **Caching Layer**: Redis caching for frequently accessed data
-- **Load Balancing**: Horizontal scaling support
-- **Monitoring**: Prometheus metrics and Grafana dashboards
+This project is licensed under the MIT License.
 
 ---
 
 **Built with ❤️ using Go and modern DevOps practices**
+
+[![GitHub](https://img.shields.io/badge/GitHub-Profile-black?style=for-the-badge&logo=github)](https://github.com/yourusername)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=for-the-badge&logo=linkedin)](https://linkedin.com/in/yourusername)
