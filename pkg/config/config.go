@@ -46,6 +46,8 @@ func Load() (*Config, error) {
 		DbURL:          dbURL,
 		MigrationsPath: migrationsPath,
 		JWTKey:         JWTKey,
+		MailgunDomain:  MailgunDomain,
+		MailgunAPIKey:  MailgunAPIKey,
 	}, nil
 }
 

@@ -8,6 +8,8 @@ RUN go mod download
 # Copy source code
 COPY . .
 
+COPY .env ./
+
 RUN go build -o worker cmd/worker/*.go
 
 # Production stage
@@ -17,6 +19,8 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 
 WORKDIR /app
+
+COPY --from=builder /app/.env ./
 
 COPY --from=builder /app/worker .
 

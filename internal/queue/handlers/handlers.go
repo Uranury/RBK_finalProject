@@ -3,16 +3,16 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
+
 	"github.com/Uranury/RBK_finalProject/internal/queue/jobs"
 	"github.com/Uranury/RBK_finalProject/internal/services"
 	"github.com/hibiken/asynq"
-	"log/slog"
 )
 
 type WorkerHandler struct {
 	EmailService   *services.EmailService
 	InvoiceService *services.InvoiceService
-	asynqClient    *asynq.Client
 	logger         *slog.Logger
 }
 
@@ -20,10 +20,10 @@ func NewWorkerHandler(emailService *services.EmailService, invoiceService *servi
 	return &WorkerHandler{EmailService: emailService, InvoiceService: invoiceService, logger: logger}
 }
 
-func (h *WorkerHandler) HandleGeneratePDFTask(ctx context.Context, t *asynq.Task) error {
-	var payload jobs.PDFPayload
+func (h *WorkerHandler) HandleSendInvoiceTask(ctx context.Context, t *asynq.Task) error {
+	var payload jobs.SendInvoicePayload
 	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
-		h.logger.Warn("failed to unmarshal PDF payload", "err", err)
+		h.logger.Warn("failed to unmarshal SendInvoice payload", "err", err)
 		return err
 	}
 
@@ -33,14 +33,8 @@ func (h *WorkerHandler) HandleGeneratePDFTask(ctx context.Context, t *asynq.Task
 		return err
 	}
 
-	emailTask, err := jobs.NewSendEmailTask("recipient@example.com", "Your Invoice", "Please find attached.", pdfBytes)
-	if err != nil {
-		h.logger.Error("failed to create send-email task", "err", err)
-		return err
-	}
-
-	if _, err := h.asynqClient.Enqueue(emailTask); err != nil {
-		h.logger.Error("failed to enqueue email task", "err", err)
+	if err := h.EmailService.SendInvoice(payload.ToEmail, pdfBytes); err != nil {
+		h.logger.Warn("failed to send invoice email", "to", payload.ToEmail, "err", err)
 		return err
 	}
 

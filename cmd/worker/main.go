@@ -1,9 +1,16 @@
 package main
 
 import (
-	"github.com/hibiken/asynq"
+	"context"
 	"log/slog"
 	"os"
+
+	"github.com/Uranury/RBK_finalProject/internal/queue/handlers"
+	"github.com/Uranury/RBK_finalProject/internal/queue/jobs"
+	"github.com/Uranury/RBK_finalProject/internal/repositories/order"
+	"github.com/Uranury/RBK_finalProject/internal/services"
+	"github.com/hibiken/asynq"
+	"github.com/mailgun/mailgun-go/v4"
 )
 
 func main() {
@@ -17,8 +24,18 @@ func main() {
 
 	mux := asynq.NewServeMux()
 
-	// Register your task handlers here
-	// e.g. mux.HandleFunc(tasks.TypeGeneratePDF, handlers.HandleGeneratePDF(deps.DB, deps.Logger))
+	// Initialize services used by worker handlers
+	ordRepo := order.NewRepository(deps.DB)
+	invoiceService := services.NewInvoiceService(ordRepo, deps.Logger)
+
+	mg := mailgun.NewMailgun(deps.Cfg.MailgunDomain, deps.Cfg.MailgunAPIKey)
+	emailService := services.NewEmailService(mg, deps.Cfg.MailgunDomain, deps.Logger)
+
+	workerHandler := handlers.NewWorkerHandler(emailService, invoiceService, deps.Logger)
+
+	mux.HandleFunc(jobs.SendInvoice, func(ctx context.Context, t *asynq.Task) error {
+		return workerHandler.HandleSendInvoiceTask(ctx, t)
+	})
 
 	if err := deps.Server.Run(mux); err != nil {
 		logger.Error("could not run asynq server", "err", err)

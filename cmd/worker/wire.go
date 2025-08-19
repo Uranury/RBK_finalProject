@@ -1,15 +1,19 @@
 package main
 
 import (
+	"log/slog"
+
 	"github.com/Uranury/RBK_finalProject/pkg/apperrors"
 	"github.com/Uranury/RBK_finalProject/pkg/config"
+	"github.com/Uranury/RBK_finalProject/pkg/db"
 	"github.com/hibiken/asynq"
-	"log/slog"
+	"github.com/jmoiron/sqlx"
 )
 
 type WorkerDeps struct {
 	Cfg    *config.Config
 	Server *asynq.Server
+	DB     *sqlx.DB
 	Logger *slog.Logger
 }
 
@@ -31,9 +35,15 @@ func InitWorkerDeps(logger *slog.Logger) (*WorkerDeps, error) {
 		},
 	)
 
+	database, err := db.InitDBWithoutMigrations("postgres", cfg.DbURL, logger)
+	if err != nil {
+		return nil, apperrors.NewInternalError("couldn't init database", err)
+	}
+
 	return &WorkerDeps{
 		Cfg:    cfg,
 		Server: server,
+		DB:     database,
 		Logger: logger,
 	}, nil
 }

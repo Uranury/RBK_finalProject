@@ -45,6 +45,33 @@ func InitDB(driver, dsn string, migrationsPath string, logger *slog.Logger) (*sq
 	return db, nil
 }
 
+// InitDBWithoutMigrations connects to the database without running migrations.
+// This is useful for workers that only need to read from the database.
+func InitDBWithoutMigrations(driver, dsn string, logger *slog.Logger) (*sqlx.DB, error) {
+	// Create the database connection
+	db, err := sqlx.Connect(driver, dsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to DB: %w", err)
+	}
+
+	// Set connection pool settings (recommended)
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(5 * time.Minute)
+
+	// Test the connection
+	if err := db.Ping(); err != nil {
+		cerr := db.Close()
+		if cerr != nil {
+			return nil, fmt.Errorf("%v; also failed to close DB: %w", err, cerr)
+		}
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	logger.Info("Database connection established successfully (without migrations)")
+	return db, nil
+}
+
 // RunMigrations applies any pending migrations from the specified path.
 // It creates its own database connection for migrations to avoid closing the main connection.
 func RunMigrations(dsn string, migrationsPath string, logger *slog.Logger) error {

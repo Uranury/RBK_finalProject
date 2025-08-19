@@ -5,9 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/Uranury/RBK_finalProject/internal/repositories/transaction"
 	"log/slog"
 	"time"
+
+	"github.com/Uranury/RBK_finalProject/internal/queue/jobs"
+	"github.com/Uranury/RBK_finalProject/internal/repositories/transaction"
 
 	"github.com/Uranury/RBK_finalProject/internal/models"
 	"github.com/Uranury/RBK_finalProject/internal/repositories/order"
@@ -240,6 +242,18 @@ func (s *MarketplaceService) PurchaseSkin(ctx context.Context, userID uuid.UUID,
 	if err := tx.Commit(); err != nil {
 		s.logger.Error("failed to commit transaction", "error", err, "order_id", ord.ID)
 		return nil, apperrors.WrapInternal(err, "failed to commit transaction")
+	}
+
+	// Enqueue send-invoice task after commit
+	task, err := jobs.NewSendInvoiceTask(ord.ID, orderItem.ID, buyer.Email)
+	if err != nil {
+		s.logger.Warn("failed to create send-invoice task", "err", err)
+	} else {
+		if _, err := s.emailQueue.Enqueue(task, asynq.Queue("default")); err != nil {
+			s.logger.Warn("failed to enqueue send-invoice task", "err", err)
+		} else {
+			s.logger.Info("send-invoice task enqueued", "order_id", ord.ID, "order_item_id", orderItem.ID, "to", buyer.Email)
+		}
 	}
 
 	s.logger.Info("skin purchase completed successfully",
