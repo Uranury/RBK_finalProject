@@ -36,6 +36,10 @@ func Load() (*Config, error) {
 		return nil, errors.New("migrations path not set")
 	}
 
+	if JWTKey == "" {
+		return nil, errors.New("JWT_SECRET not set")
+	}
+
 	if MailgunDomain == "" || MailgunAPIKey == "" {
 		log.Println("[WARN] Mailgun config not fully set – email features will be disabled")
 	}

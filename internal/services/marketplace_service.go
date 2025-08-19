@@ -43,7 +43,7 @@ func NewMarketplaceService(skinRepo skin.Repository,
 	return &MarketplaceService{skinRepo, orderRepo, userRepo, transactionRepo, emailQueue, db, logger}
 }
 
-func (s *MarketplaceService) logTransactionAsync(ctx context.Context, tx *sqlx.Tx, txn *models.Transaction) {
+func (s *MarketplaceService) logTransaction(ctx context.Context, tx *sqlx.Tx, txn *models.Transaction) {
 	if err := s.transactionRepo.Create(ctx, tx, txn); err != nil {
 		s.logger.Error("failed to create transaction record",
 			"error", err,
@@ -217,8 +217,7 @@ func (s *MarketplaceService) PurchaseSkin(ctx context.Context, userID uuid.UUID,
 		buyerTransaction.CounterpartyID = &owner.ID
 	}
 
-	// Log buyer transaction (non-blocking, fire-and-forget)
-	s.logTransactionAsync(ctx, tx, buyerTransaction)
+	s.logTransaction(ctx, tx, buyerTransaction)
 
 	// Create seller transaction record (credit) if owner exists
 	if owner != nil {
@@ -235,7 +234,7 @@ func (s *MarketplaceService) PurchaseSkin(ctx context.Context, userID uuid.UUID,
 			CreatedAt:      transactionTime,
 		}
 
-		s.logTransactionAsync(ctx, tx, sellerTransaction)
+		s.logTransaction(ctx, tx, sellerTransaction)
 	}
 
 	// Commit transaction

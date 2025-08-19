@@ -29,7 +29,7 @@ func (h *WorkerHandler) HandleSendInvoiceTask(ctx context.Context, t *asynq.Task
 		return err
 	}
 
-	h.logger.Info("unmarshaled payload successfully", "order_id", payload.OrderID, "order_item_id", payload.OrderItemID, "to_email", payload.ToEmail)
+	h.logger.Info("unmarshalled payload successfully", "order_id", payload.OrderID, "order_item_id", payload.OrderItemID, "to_email", payload.ToEmail)
 
 	pdfBytes, err := h.InvoiceService.GenerateInvoicePDF(ctx, payload.OrderID, payload.OrderItemID)
 	if err != nil {

@@ -15,33 +15,33 @@ import (
 type ErrorResponse struct {
 	Error   string            `json:"error"`
 	Code    int               `json:"code,omitempty"`
-	Details map[string]string `json:"details,omitempty"` // Field-specific validation errors
+	Details map[string]string `json:"details,omitempty"`
 }
 
 // HandleError converts application errors to appropriate HTTP responses
 func HandleError(c *gin.Context, err error) {
 	log.Printf("HandleError received error: %v (type: %T)", err, err)
 
-	// 1️⃣ Handle JSON parsing & binding errors first
+	// Handle JSON parsing & binding errors first
 	if errors.Is(err, io.EOF) || strings.Contains(err.Error(), "json:") {
 		handleBindingError(c, err)
 		return
 	}
 
-	// 2️⃣ Handle struct validation errors
+	// Handle struct validation errors
 	var validationErrors validator.ValidationErrors
 	if errors.As(err, &validationErrors) {
 		handleValidationErrors(c, validationErrors)
 		return
 	}
 
-	// 3️⃣ Handle generic binding/validation errors
+	// Handle generic binding/validation errors
 	if strings.Contains(err.Error(), "validation") || strings.Contains(err.Error(), "binding") {
 		handleBindingError(c, err)
 		return
 	}
 
-	// 4️⃣ Handle application-specific errors
+	// Handle application-specific errors
 	var appErr *apperrors.AppError
 	if errors.As(err, &appErr) {
 		httpStatus := mapErrorCodeToHTTPStatus(appErr.Code)
@@ -52,7 +52,7 @@ func HandleError(c *gin.Context, err error) {
 		return
 	}
 
-	// 5️⃣ Unknown errors — don’t leak internal details
+	// Unknown errors — don’t leak internal details
 	c.JSON(http.StatusInternalServerError, ErrorResponse{
 		Error: "An unexpected error occurred. Please try again later.",
 	})

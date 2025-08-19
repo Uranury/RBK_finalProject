@@ -24,7 +24,7 @@ func (r *repository) Create(ctx context.Context, skin *models.Skin) error {
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
 		skin.ID, skin.OwnerID, skin.Name, skin.Gun, skin.Wear, skin.Rarity, skin.Condition, skin.Price, skin.Image, skin.Available, skin.CreatedAt, skin.UpdatedAt,
 	)
-	return err // Simplified return
+	return err
 }
 
 func (r *repository) GetSkin(ctx context.Context, id uuid.UUID) (*models.Skin, error) {
