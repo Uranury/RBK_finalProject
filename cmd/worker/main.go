@@ -14,7 +14,10 @@ import (
 )
 
 func main() {
-	logger := slog.Default()
+	// Use a more verbose logger that shows all levels
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
 
 	deps, err := InitWorkerDeps(logger)
 	if err != nil {
@@ -34,6 +37,7 @@ func main() {
 	workerHandler := handlers.NewWorkerHandler(emailService, invoiceService, deps.Logger)
 
 	mux.HandleFunc(jobs.SendInvoice, func(ctx context.Context, t *asynq.Task) error {
+		logger.Info("processing send-invoice task", "task_id", t.ResultWriter().TaskID())
 		return workerHandler.HandleSendInvoiceTask(ctx, t)
 	})
 

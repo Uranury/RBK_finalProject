@@ -2,9 +2,10 @@ package services
 
 import (
 	"context"
-	"github.com/mailgun/mailgun-go/v4"
 	"log/slog"
 	"time"
+
+	"github.com/mailgun/mailgun-go/v4"
 )
 
 type EmailService struct {
@@ -18,6 +19,8 @@ func NewEmailService(mg mailgun.Mailgun, domain string, logger *slog.Logger) *Em
 }
 
 func (s *EmailService) SendInvoice(to string, pdf []byte) error {
+	s.logger.Info("attempting to send invoice email", "to", to, "domain", s.domain, "pdf_size", len(pdf))
+
 	msg := mailgun.NewMessage(
 		"noreply@"+s.domain,
 		"Your Invoice",
@@ -30,11 +33,14 @@ func (s *EmailService) SendInvoice(to string, pdf []byte) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	s.logger.Debug("sending email via Mailgun", "from", "noreply@"+s.domain, "to", to)
+
 	_, _, err := s.mg.Send(ctx, msg)
 	if err != nil {
-		s.logger.Warn("failed to send email", "to", to, "err", err)
+		s.logger.Error("failed to send email", "to", to, "err", err)
 		return err
 	}
 
+	s.logger.Info("email sent successfully", "to", to)
 	return nil
 }
