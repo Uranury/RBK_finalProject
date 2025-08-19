@@ -5,8 +5,8 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://postgresql.org)
 [![Redis](https://img.shields.io/badge/Redis-7-red.svg)](https://redis.io)
 
-[![GitHub](https://img.shields.io/badge/GitHub-Profile-black?style=for-the-badge&logo=github)](https://github.com/yourusername)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=for-the-badge&logo=linkedin)](https://linkedin.com/in/yourusername)
+[![GitHub](https://img.shields.io/badge/GitHub-Profile-black?style=for-the-badge&logo=github)](https://github.com/Uranury)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=for-the-badge&logo=linkedin)](https://linkedin.com/in/alibi-ulanuly-37700330b)
 
 A comprehensive marketplace API for buying and selling CS:GO skins, built with Go, featuring user authentication, transaction management, automated invoice generation, and email notifications.
 
@@ -210,7 +210,7 @@ This project is licensed under the MIT License.
 
 ---
 
-**Built with ❤️ using Go and modern DevOps practices**
+**Built with joy using Go (while being sick) and modern DevOps practices**
 
-[![GitHub](https://img.shields.io/badge/GitHub-Profile-black?style=for-the-badge&logo=github)](https://github.com/yourusername)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=for-the-badge&logo=linkedin)](https://linkedin.com/in/yourusername)
+[![GitHub](https://img.shields.io/badge/GitHub-Profile-black?style=for-the-badge&logo=github)](https://github.com/Uranury)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=for-the-badge&logo=linkedin)](https://linkedin.com/in/alibi-ulanuly-37700330b)
