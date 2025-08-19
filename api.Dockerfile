@@ -2,11 +2,9 @@ FROM golang:1.23.1-alpine AS builder
 
 WORKDIR /app
 
-# Copy go mod files first for better caching
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy source code
 COPY . .
 
 COPY .env ./
@@ -24,10 +22,8 @@ WORKDIR /app
 
 COPY --from=builder /app/.env ./
 
-# Copy the binary
 COPY --from=builder /app/api .
 
-# Copy migrations if needed
 COPY --from=builder /app/migrations ./migrations
 
 # Create non-root user for security

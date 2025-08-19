@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/Uranury/RBK_finalProject/pkg/apperrors"
 	"github.com/Uranury/RBK_finalProject/pkg/config"
 	"github.com/Uranury/RBK_finalProject/pkg/db"
 	"github.com/hibiken/asynq"
@@ -20,12 +21,12 @@ type AppDeps struct {
 func InitDeps(logger *slog.Logger) (*AppDeps, error) {
 	cfg, err := config.Load()
 	if err != nil {
-		return nil, err
+		return nil, apperrors.NewInternalError("couldn't load config", err)
 	}
 
 	database, err := db.InitDB("postgres", cfg.DbURL, cfg.MigrationsPath, logger)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.NewInternalError("couldn't init database", err)
 	}
 
 	redisClient := redis.NewClient(&redis.Options{

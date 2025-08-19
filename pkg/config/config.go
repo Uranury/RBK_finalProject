@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -14,6 +15,8 @@ type Config struct {
 	DbURL          string
 	MigrationsPath string
 	JWTKey         string
+	MailgunDomain  string
+	MailgunAPIKey  string
 }
 
 func Load() (*Config, error) {
@@ -26,9 +29,15 @@ func Load() (*Config, error) {
 	dbURL := getEnv("DB_URL", "postgres://postgres:postgres@db:5432/postgres?sslmode=disable")
 	migrationsPath := os.Getenv("MIGRATIONS_PATH")
 	JWTKey := os.Getenv("JWT_SECRET")
+	MailgunDomain := os.Getenv("MAILGUN_DOMAIN")
+	MailgunAPIKey := os.Getenv("MAILGUN_API_KEY")
 
 	if migrationsPath == "" {
 		return nil, errors.New("migrations path not set")
+	}
+
+	if MailgunDomain == "" || MailgunAPIKey == "" {
+		log.Println("[WARN] Mailgun config not fully set – email features will be disabled")
 	}
 
 	return &Config{

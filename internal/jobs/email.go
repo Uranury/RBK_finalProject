@@ -1,3 +1,0 @@
-package jobs
-
-func EmailHandler()

@@ -48,6 +48,18 @@ func (r *repository) GetOrderByID(ctx context.Context, id uuid.UUID) (*models.Or
 	return order, nil
 }
 
+func (r *repository) GetOrderItemByID(ctx context.Context, id uuid.UUID) (*models.OrderItem, error) {
+	orderItem := &models.OrderItem{}
+	err := r.db.GetContext(ctx, orderItem, "SELECT * FROM order_items WHERE id = $1", id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return orderItem, nil
+}
+
 func (r *repository) GetOrderByIDForUpdate(ctx context.Context, tx *sqlx.Tx, id uuid.UUID) (*models.Order, error) {
 	order := &models.Order{}
 	query := `

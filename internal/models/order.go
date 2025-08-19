@@ -10,8 +10,6 @@ type OrderStatus string
 const (
 	OrderStatusPending   OrderStatus = "pending"
 	OrderStatusCompleted OrderStatus = "completed"
-	OrderStatusFailed    OrderStatus = "failed" // Add this - when payment/processing fails
-	OrderStatusCancelled OrderStatus = "cancelled"
 )
 
 type Order struct {
