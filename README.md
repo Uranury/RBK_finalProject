@@ -70,6 +70,8 @@ finalProject/
 │   ├── auth/              # Authentication
 │   ├── handlers/          # HTTP handlers
 │   ├── models/            # Data models
+│   ├── http_server/       # Server initilization, endpoints
+│   ├── middleware/        # Auth checks
 │   ├── repositories/      # Data access layer
 │   ├── services/          # Business logic
 │   └── queue/             # Background jobs
