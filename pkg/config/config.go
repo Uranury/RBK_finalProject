@@ -19,6 +19,10 @@ type Config struct {
 	MailgunAPIKey  string
 }
 
+type DBConfig struct {
+	URL string `env:"DB_URL" required:"true"`
+}
+
 func Load() (*Config, error) {
 	if err := loadEnv(); err != nil {
 		return nil, fmt.Errorf("error loading .env file: %w", err)
