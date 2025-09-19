@@ -66,6 +66,9 @@ migrate-down:
 	@echo "Rolling back database migrations..."
 	migrate -path migrations -database "postgres://postgres:postgres@localhost:5436/postgres?sslmode=disable" down
 
+create-mig:
+	@echo "Creating new migration..."
+	migrate create -ext sql -dir migrations -seq $(name)
 
 swagger:
 	@echo "Generating Swagger documentation..."
